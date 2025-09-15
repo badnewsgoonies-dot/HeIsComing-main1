@@ -1,8 +1,10 @@
-﻿<title>He Is Coming â€” Loadout Builder (v5)</title>
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Build and simulate He Is Coming loadouts with items, weapons, upgrades, sets, and oils.">
+<title>He Is Coming - Loadout Builder (v5)</title>
 <style>
 html,body { margin:0; height:100%; background:#000; color:#f33; font-family: Inter, system-ui, Arial, sans-serif; }
 /* Slightly smaller font for a more compact UI */
@@ -234,21 +236,21 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
 </style>
 </head>
 <body>
-<header><h1>He Is Coming â€” Loadout Builder (v5)</h1></header>
+<header><h1>He Is Coming - Loadout Builder (v5)</h1></header>
 <div class="frame">
   <!-- LEFT / PLAYER -->
   <section class="panel" id="panelP">
     <div class="title">Oils</div>
     <div class="oils" id="oilsP">
-      <div class="oil" data-kind="attack"><img src="assets/attack.png"><span>Attack Oil</span></div>
-      <div class="oil" data-kind="armor"><img src="assets/armor.png"><span>Armor Oil</span></div>
-      <div class="oil" data-kind="speed"><img src="assets/speed.png"><span>Speed Oil</span></div>
+      <div class="oil" data-kind="attack"><img src="assets/attack.png" alt="Attack Oil"><span>Attack Oil</span></div>
+      <div class="oil" data-kind="armor"><img src="assets/armor.png" alt="Armor Oil"><span>Armor Oil</span></div>
+      <div class="oil" data-kind="speed"><img src="assets/speed.png" alt="Speed Oil"><span>Speed Oil</span></div>
     </div>
     <div class="weapon-slot" id="weaponP">Drop a Weapon</div>
     <div class="edge-tile">
       <div class="edge-body">
-        <img id="edgePIcon" src="assets/placeholder.png" alt="">
-        <select id="edgeP"><option value="">â€” Select Edge â€”</option></select>
+        <img id="edgePIcon" src="assets/placeholder.png" alt="Edge icon">
+        <select id="edgeP" aria-label="Edge"><option value="">Select Edge</option></select>
       </div>
       <div id="edgePEffect" class="meta effect"></div>
     </div>
@@ -265,13 +267,13 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
 
   <!-- CENTER COLUMN -->
   <div style="grid-column: 2; display: flex; flex-direction: column; height: 100%; min-height:0;">
-    <div class="tabs" style="display:flex; gap:2px; margin-bottom:8px;">
-      <button id="tabCompendium" class="tabBtn" style="background:#111;color:#f33;border:2px solid #f33;border-radius:8px 8px 0 0;padding:8px 24px;cursor:pointer;font-size:16px;">Compendium</button>
-      <button id="tabSimulation" class="tabBtn" style="background:#111;color:#0f3;border:2px solid #0f3;border-radius:8px 8px 0 0;padding:8px 24px;cursor:pointer;font-size:16px;">Simulation</button>
+    <div class="tabs" role="tablist" aria-label="Views" style="display:flex; gap:2px; margin-bottom:8px;">
+      <button id="tabCompendium" class="tabBtn" role="tab" aria-selected="true" aria-controls="compendiumTab" style="background:#111;color:#f33;border:2px solid #f33;border-radius:8px 8px 0 0;padding:8px 24px;cursor:pointer;font-size:16px;">Compendium</button>
+      <button id="tabSimulation" class="tabBtn" role="tab" aria-selected="false" aria-controls="simulationTab" style="background:#111;color:#0f3;border:2px solid #0f3;border-radius:8px 8px 0 0;padding:8px 24px;cursor:pointer;font-size:16px;">Simulation</button>
     </div>
-    <section class="center" id="compendiumTab" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+    <section class="center" id="compendiumTab" role="tabpanel" aria-labelledby="tabCompendium" style="flex:1; display:flex; flex-direction:column; min-height:0;">
       <div class="toolbar">
-        <input id="q" type="search" placeholder="Search name/effect/tagâ€¦">
+        <input id="q" type="search" placeholder="Search name/effect/tag">
         <select id="bucket">
           <option value="All">All</option><option value="items" selected>Items</option><option value="weapons">Weapons</option><option value="upgrades">Upgrades</option>
         </select>
@@ -279,20 +281,20 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
           <option value="All">All</option>
           <option value="Jewelry">Jewelry</option><option value="Tome">Tome</option><option value="Food">Food</option>
         </select>
-        <button id="randBuildBtn" type="button" title="Fill your slots with random items and a random weapon from the compendium" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">ðŸŽ² Random Build</button>
-        <button id="randEnemyBtn" type="button" title="Randomize the opponent's loadout" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">ðŸŽ² Random Enemy</button>
+        <button id="randBuildBtn" type="button" title="Fill your slots with random items and a random weapon from the compendium" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">Random Build</button>
+        <button id="randEnemyBtn" type="button" title="Randomize the opponent's loadout" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">Random Enemy</button>
         <button id="showSimBtn" type="button" style="background:#0f3;color:#000;border:1px solid #0f3;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;margin-left:16px;">Show Simulation</button>
         <span id="count" style="margin-left:auto;">Shown: 0</span>
       </div>
       <div id="grid" class="grid" style="flex:1;"></div>
     </section>
-    <section class="center" id="simulationTab" style="flex:1; display:none; flex-direction:column; align-items:center; justify-content:center; min-height:0;">
+    <section class="center" id="simulationTab" role="tabpanel" aria-labelledby="tabSimulation" style="flex:1; display:none; flex-direction:column; align-items:center; justify-content:center; min-height:0;">
       <div id="simPanel" style="width:640px;max-width:100%;margin:24px auto;background:#000;border:2px solid #0f3;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 0 32px #000;">
         <div id="simControls" style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;">
-          <button id="btnSimulate" type="button" title="Run a simulation between the two loadouts" style="background:#0f3;color:#000;border:1px solid #0f3;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:20px;">â–¶ Simulate</button>
+          <button id="btnSimulate" type="button" title="Run a simulation between the two loadouts" style="background:#0f3;color:#000;border:1px solid #0f3;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:20px;">Simulate</button>
           <button id="btnClearLog" type="button" title="Clear the simulation log" style="background:#333;color:#0f3;border:1px solid #0f3;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:20px;">Clear Log</button>
         </div>
-        <div id="simLog" style="flex:1;min-height:240px;max-height:60vh;overflow:auto;background:#111;border:2px solid #0f3;border-radius:12px;padding:18px;font-size:18px;font-family:monospace;color:#0f3;"></div>
+        <div id="simLog" role="log" aria-live="polite" aria-atomic="false" style="flex:1;min-height:240px;max-height:60vh;overflow:auto;background:#111;border:2px solid #0f3;border-radius:12px;padding:18px;font-size:18px;font-family:monospace;color:#0f3;"></div>
       </div>
     </section>
   </div>
@@ -301,15 +303,15 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
   <section class="panel" id="panelO">
     <div class="title">Oils</div>
     <div class="oils" id="oilsO">
-      <div class="oil" data-kind="attack"><img src="assets/attack.png"><span>Attack Oil</span></div>
-      <div class="oil" data-kind="armor"><img src="assets/armor.png"><span>Armor Oil</span></div>
-      <div class="oil" data-kind="speed"><img src="assets/speed.png"><span>Speed Oil</span></div>
+      <div class="oil" data-kind="attack"><img src="assets/attack.png" alt="Attack Oil"><span>Attack Oil</span></div>
+      <div class="oil" data-kind="armor"><img src="assets/armor.png" alt="Armor Oil"><span>Armor Oil</span></div>
+      <div class="oil" data-kind="speed"><img src="assets/speed.png" alt="Speed Oil"><span>Speed Oil</span></div>
     </div>
     <div class="weapon-slot" id="weaponO">Drop a Weapon</div>
     <div class="edge-tile">
       <div class="edge-body">
-        <img id="edgeOIcon" src="assets/placeholder.png" alt="">
-        <select id="edgeO"><option value="">â€” Select Edge â€”</option></select>
+        <img id="edgeOIcon" src="assets/placeholder.png" alt="Edge icon">
+        <select id="edgeO" aria-label="Edge"><option value="">Select Edge</option></select>
       </div>
       <div id="edgeOEffect" class="meta effect"></div>
     </div>
@@ -433,13 +435,13 @@ detailModal.addEventListener('click', e => { if (e.target === detailModal) detai
 function sanitizeUI() {
   try {
     const h1 = document.querySelector('header h1');
-    if (h1) h1.textContent = 'He Is Coming — Loadout Builder (v5)';
+    if (h1) h1.textContent = 'He Is Coming � Loadout Builder (v5)';
     const rb = document.getElementById('randBuildBtn');
     if (rb) rb.textContent = 'Random Build';
     const re = document.getElementById('randEnemyBtn');
     if (re) re.textContent = 'Random Enemy';
     const q = document.getElementById('q');
-    if (q) q.setAttribute('placeholder', 'Search name/effect/tag…');
+    if (q) q.setAttribute('placeholder', 'Search name/effect/tag�');
     const edgeP = document.getElementById('edgeP');
     if (edgeP) { const opt = edgeP.querySelector('option[value=""]'); if (opt) opt.textContent = 'Select Edge'; }
     const edgeO = document.getElementById('edgeO');
@@ -522,7 +524,7 @@ function updateTotals(sideKey) {
           const chip = document.createElement('span');
           chip.className = 'setChip';
           const iconSlug = d.effectSlug || (`sets/${d.key}`);
-          chip.innerHTML = `<img src="${iconSlug}/icon.png" alt="${d.name}"><span class="name">${d.name}</span><span class="desc">— ${d.desc}</span>`;
+          chip.innerHTML = `<img src="${iconSlug}/icon.png" alt="${d.name}"><span class="name">${d.name}</span><span class="desc">� ${d.desc}</span>`;
           box.appendChild(chip);
         });
       }
@@ -1246,7 +1248,7 @@ if (clearBtn) {
   function hashFromCanvas(csrc){ const N=16; const c2=document.createElement('canvas'); c2.width=N; c2.height=N; const cx2=c2.getContext('2d'); cx2.imageSmoothingEnabled=true; cx2.drawImage(csrc,0,0,N,N); const d=cx2.getImageData(0,0,N,N).data; const g=toGray(d); let mean=0; for(let i=0;i<g.length;i++) mean+=g[i]; mean/=g.length; let sd=0; for(let i=0;i<g.length;i++){ const v=g[i]-mean; sd+=v*v; } sd=Math.sqrt(sd/g.length)||1; for(let i=0;i<g.length;i++) g[i]=(g[i]-mean)/sd; return g; }
   function loadCache(){ try { const meta=JSON.parse(localStorage.getItem('HEIC_FP_META')||'null'); const data=JSON.parse(localStorage.getItem('HEIC_FPCACHE_V1')||'null'); if(!meta||!data) return null; const expect=Object.keys(RAW_DATA||{}).filter(k=>/(^items\/|^weapons\/|^upgrades\/)/.test(k)).length; if (meta.len!==expect) return null; return data; } catch(_){ return null; } }
 // Persist the fingerprint library to localStorage.
-// Use a multi‑line implementation here rather than a heavily minified one to
+// Use a multi-line implementation here rather than a heavily minified one to
 // avoid parser confusion from comment delimiters and regular expressions.  See
 // https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage for API
 // details.
@@ -1378,7 +1380,7 @@ function saveCache(list) {
     const it1=WIZ.rects.item1, it2=WIZ.rects.item2; const weapon=WIZ.rects.weapon; if (it1 && it2){ const step=Math.max(8, Math.round(it2.y - it1.y)); const tileW=it1.w; ROIS[`${sKey}-items`] = { x:it1.x, y:it1.y, w:tileW, h:step*12, rows:12, cols:1 }; }
     if (weapon) ROIS[`${sKey}-weapon`]=weapon; if (WIZ.rects.oils) ROIS[`${sKey}-oils`]=Object.assign({},WIZ.rects.oils,{rows:3,cols:1}); if (WIZ.rects.edge) ROIS[`${sKey}-edge`]=WIZ.rects.edge; WIZ.active=false; WIZ.step=0; wizSetHint(); render(); scanAndApply(); }
 
-  // Quick mode: build a 12×1 grid from a single weapon-tile rectangle
+  // Quick mode: build a 12�1 grid from a single weapon-tile rectangle
   function onQuickWeaponRect(rect){
     if (!QUICK.active || !rect) { QUICK.active=false; if (quickHint) quickHint.textContent=''; return; }
     let {x,y,w,h}=rect; if (w<0){x+=w;w=-w;} if (h<0){y+=h;h=-h;}
@@ -1424,6 +1426,9 @@ if (tabCompendium && tabSimulation && compendiumTab && simulationTab) {
     tabCompendium.style.color = '#f33';
     tabSimulation.style.background = '#111';
     tabSimulation.style.color = '#0f3';
+    // a11y: update tab selection state
+    tabCompendium.setAttribute('aria-selected', 'true');
+    tabSimulation.setAttribute('aria-selected', 'false');
     // tabImport removed
   });
   tabSimulation.addEventListener('click', () => {
@@ -1434,6 +1439,9 @@ if (tabCompendium && tabSimulation && compendiumTab && simulationTab) {
     tabCompendium.style.color = '#f33';
     tabSimulation.style.background = '#111';
     tabSimulation.style.color = '#0f3';
+    // a11y: update tab selection state
+    tabCompendium.setAttribute('aria-selected', 'false');
+    tabSimulation.setAttribute('aria-selected', 'true');
     // tabImport removed
   });
 }
@@ -1445,6 +1453,9 @@ if (showSimBtn && simulationTab && compendiumTab) {
     tabCompendium.style.color = '#f33';
     tabSimulation.style.background = '#111';
     tabSimulation.style.color = '#0f3';
+    // a11y: update tab selection state
+    tabCompendium.setAttribute('aria-selected', 'false');
+    tabSimulation.setAttribute('aria-selected', 'true');
   });
 }
 
