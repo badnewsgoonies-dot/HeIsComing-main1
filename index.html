@@ -352,50 +352,149 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
 let RAW_DATA = {};
 let DATA_ARR = [];
 async function loadData() {
-  try {
-    if (window.HEIC_DETAILS && typeof window.HEIC_DETAILS === 'object') {
-      RAW_DATA = window.HEIC_DETAILS;
-    } else {
-      const res = await fetch('details.json', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Failed to load details.json: ' + res.status);
-      RAW_DATA = await res.json();
-      try { window.HEIC_DETAILS = RAW_DATA; } catch(_) {}
-    }
+
+  let baseData = null;
+
+  let usedFallback = false;
+
+
+
+  const embeddedData = () => {
+
     try {
-      const resO = await fetch('stats_overrides.json', { cache: 'no-store' });
-      if (resO.ok) {
-        const overrides = await resO.json();
-        for (const [k, statObj] of Object.entries(overrides || {})) {
-          if (RAW_DATA[k]) {
-            const baseStats = RAW_DATA[k].stats || {};
-            RAW_DATA[k].stats = Object.assign({}, baseStats, statObj);
-          }
-        }
-      }
+
+      if (window.HEIC_DETAILS && typeof window.HEIC_DETAILS === 'object') return window.HEIC_DETAILS;
+
     } catch (_) {}
-    DATA_ARR = Object.entries(RAW_DATA).map(([key, val]) => { val.key = key; return val; });
-    window.TIERABLE = new Set();
-    const keys = Object.keys(RAW_DATA);
-    const hasVariant = (slug) => keys.some(k => /^(items|weapons)\//.test(k) && (k.endsWith(slug + '_gold') || k.endsWith(slug + '_diamond')));
-    for (const [k, v] of Object.entries(RAW_DATA)) {
-      if (!v || typeof v !== 'object') continue;
-      const eff = (v.effect || '');
-      const m = /^(items|weapons)\/(.+)$/.exec(k);
-      const baseSlug = m ? m[2] : '';
-      if (/gold|diamond/i.test(eff) || hasVariant(baseSlug)) {
-        window.TIERABLE.add(k);
-      }
+
+    return null;
+
+  };
+
+
+
+  try {
+
+    const res = await fetch('details.json', { cache: 'no-store' });
+
+    if (!res.ok) throw new Error('Failed to load details.json: ' + res.status);
+
+    baseData = await res.json();
+
+    try { window.HEIC_DETAILS = baseData; } catch (_) {}
+
+    console.log('[HEIC] details.json loaded', Object.keys(baseData || {}).length);
+
+  } catch (fetchErr) {
+
+    const fallback = embeddedData();
+
+    if (fallback) {
+
+      baseData = fallback;
+
+      usedFallback = true;
+
+      console.warn('[HEIC] Using embedded details.js payload', fetchErr);
+
+    } else {
+
+      console.error('[HEIC] Unable to load compendium data.', fetchErr);
+
+      showNoDataMessage('Failed to load compendium data. Serve via a local server or ensure details.js is bundled.');
+
+      return;
+
     }
-    console.log('HeIC: loaded entries =', DATA_ARR.length);
-    populateEdges();
-    initSlots();
-    renderGrid();
-    updateTotals('P');
-    updateTotals('O');
-  } catch (err) {
-    console.error('Error loading details.json', err);
+
   }
+
+
+
+  RAW_DATA = baseData || {};
+
+
+
+  try {
+
+    const resO = await fetch('stats_overrides.json', { cache: 'no-store' });
+
+    if (resO.ok) {
+
+      const overrides = await resO.json();
+
+      for (const [k, statObj] of Object.entries(overrides || {})) {
+
+        if (RAW_DATA[k]) {
+
+          const baseStats = RAW_DATA[k].stats || {};
+
+          RAW_DATA[k].stats = Object.assign({}, baseStats, statObj);
+
+        }
+
+      }
+
+    }
+
+  } catch (oerr) {
+
+    console.warn('[HEIC] stats_overrides.json merge skipped', oerr);
+
+  }
+
+
+
+  DATA_ARR = Object.entries(RAW_DATA).map(([key, val]) => { val.key = key; return val; });
+
+
+
+  window.TIERABLE = new Set();
+
+  const keys = Object.keys(RAW_DATA);
+
+  const hasVariant = (slug) => keys.some(k => /^(items|weapons)\//.test(k) && (k.endsWith(slug + '_gold') || k.endsWith(slug + '_diamond')));
+
+  for (const [k, v] of Object.entries(RAW_DATA)) {
+
+    if (!v || typeof v !== 'object') continue;
+
+    const eff = (v.effect || '');
+
+    const m = /^(items|weapons)\/(.+)$/.exec(k);
+
+    const baseSlug = m ? m[2] : '';
+
+    if (/gold|diamond/i.test(eff) || hasVariant(baseSlug)) {
+
+      window.TIERABLE.add(k);
+
+    }
+
+  }
+
+
+
+  console.log(`[HEIC] data entries ready: ${DATA_ARR.length}${usedFallback ? ' (embedded)' : ''}`);
+
+
+
+  populateEdges();
+
+  initSlots();
+
+  renderGrid();
+
+  updateTotals('P');
+
+  updateTotals('O');
+
 }
+
+
+
+function bootLoadoutBuilder() {
+
 function bootLoadoutBuilder() {
   try {
     loadData();
@@ -423,6 +522,38 @@ const detailEffect = $('#detailEffect');
 const detailStats = $('#detailStats');
 $('#detailClose').addEventListener('click', () => detailModal.style.display='none');
 detailModal.addEventListener('click', e => { if (e.target === detailModal) detailModal.style.display='none'; });
+
+
+
+function showNoDataMessage(message){
+
+  if (!grid) return;
+
+  grid.innerHTML = '';
+
+  const msg = document.createElement('div');
+
+  msg.style.padding = '12px';
+
+  msg.style.border = '2px solid #f33';
+
+  msg.style.borderRadius = '12px';
+
+  msg.style.background = '#220';
+
+  msg.style.color = '#f88';
+
+  msg.style.textAlign = 'center';
+
+  msg.textContent = message;
+
+  grid.appendChild(msg);
+
+  if (countSpan) countSpan.textContent = 'Shown: 0 / Total: 0';
+
+}
+
+
 
 // Number of item slots available per side.  Displayed as empty dashed boxes until filled.
 const SLOT_COUNT = 12;
@@ -635,127 +766,136 @@ function showDetail(entry) {
   detailModal.style.display = 'flex';
 }
 
-function renderGrid() {
-  const term = searchIn.value.trim().toLowerCase();
-  const bucketVal = bucketSel.value;
-  const catVal = catSel.value;
-  let shown = 0;
-  grid.innerHTML = '';
-  DATA_ARR.forEach(entry => {
-    if (bucketVal !== 'All' && entry.bucket !== bucketVal) return;
-    if (catVal !== 'All') {
-      if (!entry.tags || !entry.tags.includes(catVal)) return;
-    }
-    const hay = `${entry.name} ${entry.effect || ''} ${entry.key}`.toLowerCase();
-    if (term && !hay.includes(term)) return;
-    shown++;
-    const card = document.createElement('div'); card.className='card';
-    card.draggable = true; card.dataset.key = entry.key;
-    card.dataset.cat = (entry.tags||[]).find(t=>t==='Jewelry'||t==='Tome'||t==='Food') || '';
+function renderGrid() {
+  if (!grid) return;
+  const term = (searchIn && searchIn.value ? searchIn.value : '').trim().toLowerCase();
+  const bucketVal = bucketSel ? bucketSel.value : 'All';
+  const catVal = catSel ? catSel.value : 'All';
+  const total = Array.isArray(DATA_ARR) ? DATA_ARR.length : 0;
+  if (!total) {
+    showNoDataMessage('Compendium data not available. Check details.js or details.json.');
+    return;
+  }
+  let shown = 0;
+  grid.innerHTML = '';
+  DATA_ARR.forEach(entry => {
+    if (bucketVal !== 'All' && entry.bucket !== bucketVal) return;
+    if (catVal !== 'All') {
+      if (!entry.tags || !entry.tags.includes(catVal)) return;
+    }
+    const hay = `${entry.name} ${entry.effect || ''} ${entry.key}`.toLowerCase();
+    if (term && !hay.includes(term)) return;
+    shown++;
+    const card = document.createElement('div'); card.className='card';
+    card.draggable = true; card.dataset.key = entry.key;
+    card.dataset.cat = (entry.tags||[]).find(t=>t==='Jewelry'||t==='Tome'||t==='Food') || '';
+
+    const topRow = document.createElement('div'); topRow.style.display='flex'; topRow.style.alignItems='center'; topRow.style.gap='8px';
+    const icon = document.createElement('img');
+    icon.src = `${entry.bucket}/${entry.slug}/icon.png`;
+    icon.alt = entry.name;
+    icon.onerror = () => { icon.onerror = null; icon.src = 'placeholder.png'; };
+    icon.style.width = '48px';
+    icon.style.height = '48px';
+    icon.style.imageRendering = 'pixelated';
+    icon.style.marginRight = '12px';
+    const nameSlug = document.createElement('div');
+    nameSlug.innerHTML = `<div style="font-weight:700;font-size:20px;color:#f33;">${entry.name}</div><div style="font-size:15px;color:#faa;">${entry.key}</div>`;
+    topRow.appendChild(icon);
+    topRow.appendChild(nameSlug);
+    const tierSel = document.createElement('select'); tierSel.innerHTML = '<option value="base">Base</option><option value="gold">Gold</option><option value="diamond">Diamond</option>';
+    tierSel.style.background = '#1b1216'; tierSel.style.color = '#f33'; tierSel.style.border = '1px solid #f33'; tierSel.style.borderRadius = '8px'; tierSel.style.padding = '2px 6px'; tierSel.style.fontSize = '12px';
+    tierSel.addEventListener('click', ev => ev.stopPropagation());
+    card.dataset.tier = 'base';
+    tierSel.addEventListener('change', () => { card.dataset.tier = tierSel.value; });
+    const supportsTier = (window.TIERABLE && window.TIERABLE.has(entry.key));
+    if (!supportsTier) tierSel.style.display = 'none';
+    const actions = document.createElement('div'); actions.className = 'card__actions'; actions.style.marginLeft = 'auto';
+    const btnP = document.createElement('button'); btnP.className = 'card__btn'; btnP.textContent = 'Add P';
+    const btnO = document.createElement('button'); btnO.className = 'card__btn'; btnO.textContent = 'Add O';
+    btnP.addEventListener('click', (ev) => { ev.stopPropagation(); quickAdd('P', entry, card.dataset.tier || 'base'); });
+    btnO.addEventListener('click', (ev) => { ev.stopPropagation(); quickAdd('O', entry, card.dataset.tier || 'base'); });
+    actions.append(tierSel, btnP, btnO);
+    topRow.appendChild(actions);
+
+    const effectDiv = document.createElement('div');
+    effectDiv.className = 'effect';
+    effectDiv.style.marginTop = '8px';
+    effectDiv.style.marginBottom = '8px';
+    effectDiv.style.color = '#fff';
+    effectDiv.style.fontSize = '12px';
+    effectDiv.textContent = entry.effect || '';
+    const divider = document.createElement('div');
+    divider.style.height = '3px';
+    divider.style.background = '#f33';
+    divider.style.margin = '8px 0 8px 0';
+    divider.style.borderRadius = '2px';
+
+    const statRow1 = document.createElement('div'); statRow1.style.display='flex'; statRow1.style.gap='16px'; statRow1.style.marginBottom='8px';
+    const statRow2 = document.createElement('div'); statRow2.style.display='flex'; statRow2.style.gap='16px';
+    const statOrder = [
+      { key:'attack', label:'Attack', color:'#f33', icon:'attack.png' },
+      { key:'armor', label:'Armor', color:'#3af', icon:'armor.png' },
+      { key:'health', label:'Health', color:'#95d5b2', icon:'health.png' },
+      { key:'speed', label:'Speed', color:'#ffd166', icon:'speed.png' }
+    ];
+    statOrder.forEach((st, idx) => {
+      const val = entry.stats && typeof entry.stats[st.key] === 'number' ? entry.stats[st.key] : 0;
+      const pill = document.createElement('div');
+      pill.style.display = 'flex';
+      pill.style.alignItems = 'center';
+      pill.style.gap = '8px';
+      pill.style.background = '#210';
+      pill.style.border = '2px solid #f33';
+      pill.style.borderRadius = '16px';
+      pill.style.padding = '8px 18px';
+      pill.style.fontSize = '18px';
+      pill.style.color = st.color;
+      const pImg = document.createElement('img'); pImg.src = st.icon; pImg.style.width='24px'; pImg.style.height='24px'; pImg.style.imageRendering='pixelated';
+      const pTxt = document.createElement('span'); pTxt.textContent = `${st.label}: ${val}`;
+      pill.appendChild(pImg);
+      pill.appendChild(pTxt);
+      if (idx < 2) statRow1.appendChild(pill); else statRow2.appendChild(pill);
+    });
+
+    card.style.background = '#000';
+    card.style.border = '2px solid #f33';
+    card.style.borderRadius = '16px';
+    card.style.padding = '14px';
+    card.style.margin = '4px';
+    card.style.color = '#fff';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.gap = '6px';
+    card.style.width = '100%';
+    card.style.boxSizing = 'border-box';
+
+    card.appendChild(topRow);
+    card.appendChild(effectDiv);
+    card.appendChild(divider);
+    card.appendChild(statRow1);
+    card.appendChild(statRow2);
+
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', entry.key);
+      try { e.dataTransfer.setData('application/json', JSON.stringify({ key: entry.key, tier: card.dataset.tier || 'base' })); } catch(_){ }
+    });
+    card.addEventListener('click', () => showDetail(entry));
+    grid.appendChild(card);
+  });
+
+  if (!shown) {
+    const msg = document.createElement('div');
+    msg.style.padding = '12px';
+    msg.style.textAlign = 'center';
+    msg.style.color = '#f88';
+    msg.textContent = term || bucketVal !== 'All' || catVal !== 'All' ? 'No items match the current filters.' : 'No items available.';
+    grid.appendChild(msg);
+  }
+
+  if (countSpan) countSpan.textContent = `Shown: ${shown} / Total: ${total}`;
+}
 
-    // Top row: icon, name/slug, tier selector, quick actions
-    const topRow = document.createElement('div'); topRow.style.display='flex'; topRow.style.alignItems='center'; topRow.style.gap='8px';
-    // Icon
-    const icon = document.createElement('img');
-    icon.src = `${entry.bucket}/${entry.slug}/icon.png`;
-    icon.alt = entry.name;
-    icon.onerror = () => { icon.onerror = null; icon.src = 'placeholder.png'; };
-    icon.style.width = '48px';
-    icon.style.height = '48px';
-    icon.style.imageRendering = 'pixelated';
-    icon.style.marginRight = '12px';
-    // Name and slug
-    const nameSlug = document.createElement('div');
-    nameSlug.innerHTML = `<div style="font-weight:700;font-size:20px;color:#f33;">${entry.name}</div><div style="font-size:15px;color:#faa;">${entry.key}</div>`;
-    topRow.appendChild(icon);
-    topRow.appendChild(nameSlug);
-    // Tier selector (only shown if item supports tiers)
-    const tierSel = document.createElement('select'); tierSel.innerHTML = '<option value="base">Base</option><option value="gold">Gold</option><option value="diamond">Diamond</option>';
-    tierSel.style.background = '#1b1216'; tierSel.style.color = '#f33'; tierSel.style.border = '1px solid #f33'; tierSel.style.borderRadius = '8px'; tierSel.style.padding = '2px 6px'; tierSel.style.fontSize = '12px';
-    tierSel.addEventListener('click', ev => ev.stopPropagation());
-    card.dataset.tier = 'base';
-    tierSel.addEventListener('change', () => { card.dataset.tier = tierSel.value; });
-    const supportsTier = (window.TIERABLE && window.TIERABLE.has(entry.key));
-    if (!supportsTier) tierSel.style.display = 'none';
-    // Actions container
-    const actions = document.createElement('div'); actions.className = 'card__actions'; actions.style.marginLeft = 'auto';
-    const btnP = document.createElement('button'); btnP.className = 'card__btn'; btnP.textContent = 'Add P';
-    const btnO = document.createElement('button'); btnO.className = 'card__btn'; btnO.textContent = 'Add O';
-    btnP.addEventListener('click', (ev) => { ev.stopPropagation(); quickAdd('P', entry, card.dataset.tier || 'base'); });
-    btnO.addEventListener('click', (ev) => { ev.stopPropagation(); quickAdd('O', entry, card.dataset.tier || 'base'); });
-    actions.append(tierSel, btnP, btnO);
-    topRow.appendChild(actions);
-
-    // Effect text and divider
-    const effectDiv = document.createElement('div');
-    effectDiv.className = 'effect';
-    effectDiv.style.marginTop = '8px';
-    effectDiv.style.marginBottom = '8px';
-    effectDiv.style.color = '#fff';
-    effectDiv.style.fontSize = '12px';
-    effectDiv.textContent = entry.effect || '';
-    const divider = document.createElement('div');
-    divider.style.height = '3px';
-    divider.style.background = '#f33';
-    divider.style.margin = '8px 0 8px 0';
-    divider.style.borderRadius = '2px';
-
-    // Stat pills in two rows
-    const statRow1 = document.createElement('div'); statRow1.style.display='flex'; statRow1.style.gap='16px'; statRow1.style.marginBottom='8px';
-    const statRow2 = document.createElement('div'); statRow2.style.display='flex'; statRow2.style.gap='16px';
-    const statOrder = [
-      { key:'attack', label:'Attack', color:'#f33', icon:'attack.png' },
-      { key:'armor', label:'Armor', color:'#3af', icon:'armor.png' },
-      { key:'health', label:'Health', color:'#95d5b2', icon:'health.png' },
-      { key:'speed', label:'Speed', color:'#ffd166', icon:'speed.png' }
-    ];
-    statOrder.forEach((st, idx) => {
-      const val = entry.stats && typeof entry.stats[st.key] === 'number' ? entry.stats[st.key] : 0;
-      const pill = document.createElement('div');
-      pill.style.display = 'flex';
-      pill.style.alignItems = 'center';
-      pill.style.gap = '8px';
-      pill.style.background = '#210';
-      pill.style.border = '2px solid #f33';
-      pill.style.borderRadius = '16px';
-      pill.style.padding = '8px 18px';
-      pill.style.fontSize = '18px';
-      pill.style.color = st.color;
-      const pImg = document.createElement('img'); pImg.src = st.icon; pImg.style.width='24px'; pImg.style.height='24px'; pImg.style.imageRendering='pixelated';
-      const pTxt = document.createElement('span'); pTxt.textContent = `${st.label}: ${val}`;
-      pill.appendChild(pImg);
-      pill.appendChild(pTxt);
-      if (idx < 2) statRow1.appendChild(pill); else statRow2.appendChild(pill);
-    });
-
-    // Card layout
-    card.style.background = '#000';
-    card.style.border = '2px solid #f33';
-    card.style.borderRadius = '16px';
-    card.style.padding = '14px';
-    card.style.margin = '4px';
-    card.style.color = '#fff';
-    card.style.display = 'flex';
-    card.style.flexDirection = 'column';
-    card.style.gap = '6px';
-    card.style.width = '100%';
-    card.style.boxSizing = 'border-box';
-
-    card.appendChild(topRow);
-    card.appendChild(effectDiv);
-    card.appendChild(divider);
-    card.appendChild(statRow1);
-    card.appendChild(statRow2);
-
-    card.addEventListener('dragstart', e => {
-      e.dataTransfer.setData('text/plain', entry.key);
-      try { e.dataTransfer.setData('application/json', JSON.stringify({ key: entry.key, tier: card.dataset.tier || 'base' })); } catch(_){ }
-    });
-    card.addEventListener('click', () => showDetail(entry));
-    grid.appendChild(card);
-  });
-  countSpan.textContent = `Shown: ${shown}`;
-}
 
 // Filter listeners
 [searchIn, bucketSel, catSel].forEach(el => el.addEventListener('input', renderGrid));
