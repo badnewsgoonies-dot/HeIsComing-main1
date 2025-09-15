@@ -658,7 +658,8 @@ function renderGrid() {
     // Icon
     const icon = document.createElement('img');
     icon.src = `${entry.bucket}/${entry.slug}/icon.png`;
-    icon.alt = entry.name;\r\n    icon.onerror = () => { icon.onerror = null; icon.src = 'placeholder.png'; };
+    icon.alt = entry.name;
+    icon.onerror = () => { icon.onerror = null; icon.src = 'placeholder.png'; };
     icon.style.width = '48px';
     icon.style.height = '48px';
     icon.style.imageRendering = 'pixelated';
@@ -1406,6 +1407,8 @@ if (showSimBtn && simulationTab && compendiumTab) {
 
 </body>
 </html>
+
+
 
 
 
