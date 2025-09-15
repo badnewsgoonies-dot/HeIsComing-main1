@@ -1,10 +1,5 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-<head>
+?<title>He Is Coming — Loadout Builder (v5)</title>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Build and simulate He Is Coming loadouts with items, weapons, upgrades, sets, and oils.">
-<title>He Is Coming - Loadout Builder (v5)</title>
 <style>
 html,body { margin:0; height:100%; background:#000; color:#f33; font-family: Inter, system-ui, Arial, sans-serif; }
 /* Slightly smaller font for a more compact UI */
@@ -236,21 +231,24 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
 </style>
 </head>
 <body>
-<header><h1>He Is Coming - Loadout Builder (v5)</h1></header>
+<header><h1>He Is Coming — Loadout Builder (v5)</h1></header>
 <div class="frame">
   <!-- LEFT / PLAYER -->
   <section class="panel" id="panelP">
     <div class="title">Oils</div>
     <div class="oils" id="oilsP">
-      <div class="oil" data-kind="attack"><img src="assets/attack.png" alt="Attack Oil"><span>Attack Oil</span></div>
-      <div class="oil" data-kind="armor"><img src="assets/armor.png" alt="Armor Oil"><span>Armor Oil</span></div>
-      <div class="oil" data-kind="speed"><img src="assets/speed.png" alt="Speed Oil"><span>Speed Oil</span></div>
+      <div class="oil" data-kind="attack"><img src="assets/attack.png"><span>Attack Oil</span></div>
+      <div class="oil" data-kind="armor"><img src="assets/armor.png"><span>Armor Oil</span></div>
+      <div class="oil" data-kind="speed"><img src="assets/speed.png"><span>Speed Oil</span></div>
+    </div>
+    <div class="panel-actions" style="display:flex; gap:8px; margin-top:8px;">
+      <button id="resetPBtn" type="button" title="Clear the player's weapon, items, oils, and edge">Reset Player</button>
     </div>
     <div class="weapon-slot" id="weaponP">Drop a Weapon</div>
     <div class="edge-tile">
       <div class="edge-body">
-        <img id="edgePIcon" src="assets/placeholder.png" alt="Edge icon">
-        <select id="edgeP" aria-label="Edge"><option value="">Select Edge</option></select>
+        <img id="edgePIcon" src="assets/placeholder.png" alt="">
+        <select id="edgeP"><option value="">— Select Edge —</option></select>
       </div>
       <div id="edgePEffect" class="meta effect"></div>
     </div>
@@ -267,34 +265,34 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
 
   <!-- CENTER COLUMN -->
   <div style="grid-column: 2; display: flex; flex-direction: column; height: 100%; min-height:0;">
-    <div class="tabs" role="tablist" aria-label="Views" style="display:flex; gap:2px; margin-bottom:8px;">
-      <button id="tabCompendium" class="tabBtn" role="tab" aria-selected="true" aria-controls="compendiumTab" style="background:#111;color:#f33;border:2px solid #f33;border-radius:8px 8px 0 0;padding:8px 24px;cursor:pointer;font-size:16px;">Compendium</button>
-      <button id="tabSimulation" class="tabBtn" role="tab" aria-selected="false" aria-controls="simulationTab" style="background:#111;color:#0f3;border:2px solid #0f3;border-radius:8px 8px 0 0;padding:8px 24px;cursor:pointer;font-size:16px;">Simulation</button>
+    <div class="tabs" style="display:flex; gap:2px; margin-bottom:8px;">
+      <button id="tabCompendium" class="tabBtn" style="background:#111;color:#f33;border:2px solid #f33;border-radius:8px 8px 0 0;padding:8px 24px;cursor:pointer;font-size:16px;">Compendium</button>
+      <button id="tabSimulation" class="tabBtn" style="background:#111;color:#0f3;border:2px solid #0f3;border-radius:8px 8px 0 0;padding:8px 24px;cursor:pointer;font-size:16px;">Simulation</button>
     </div>
-    <section class="center" id="compendiumTab" role="tabpanel" aria-labelledby="tabCompendium" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+    <section class="center" id="compendiumTab" style="flex:1; display:flex; flex-direction:column; min-height:0;">
       <div class="toolbar">
-        <input id="q" type="search" placeholder="Search name/effect/tag">
+        <input id="q" type="search" placeholder="Search name/effect/tag…">
         <select id="bucket">
-          <option value="All">All</option><option value="items" selected>Items</option><option value="weapons">Weapons</option><option value="upgrades">Upgrades</option>
+          <option value="All">All</option><option value="items">Items</option><option value="weapons">Weapons</option><option value="upgrades">Upgrades</option>
         </select>
         <select id="cat">
           <option value="All">All</option>
           <option value="Jewelry">Jewelry</option><option value="Tome">Tome</option><option value="Food">Food</option>
         </select>
-        <button id="randBuildBtn" type="button" title="Fill your slots with random items and a random weapon from the compendium" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">Random Build</button>
-        <button id="randEnemyBtn" type="button" title="Randomize the opponent's loadout" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">Random Enemy</button>
+        <button id="randBuildBtn" type="button" title="Fill your slots with random items and a random weapon from the compendium" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">🎲 Random Build</button>
+        <button id="randEnemyBtn" type="button" title="Randomize the opponent's loadout" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">🎲 Random Enemy</button>
         <button id="showSimBtn" type="button" style="background:#0f3;color:#000;border:1px solid #0f3;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;margin-left:16px;">Show Simulation</button>
         <span id="count" style="margin-left:auto;">Shown: 0</span>
       </div>
       <div id="grid" class="grid" style="flex:1;"></div>
     </section>
-    <section class="center" id="simulationTab" role="tabpanel" aria-labelledby="tabSimulation" style="flex:1; display:none; flex-direction:column; align-items:center; justify-content:center; min-height:0;">
+    <section class="center" id="simulationTab" style="flex:1; display:none; flex-direction:column; align-items:center; justify-content:center; min-height:0;">
       <div id="simPanel" style="width:640px;max-width:100%;margin:24px auto;background:#000;border:2px solid #0f3;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 0 32px #000;">
         <div id="simControls" style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;">
-          <button id="btnSimulate" type="button" title="Run a simulation between the two loadouts" style="background:#0f3;color:#000;border:1px solid #0f3;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:20px;">Simulate</button>
+          <button id="btnSimulate" type="button" title="Run a simulation between the two loadouts" style="background:#0f3;color:#000;border:1px solid #0f3;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:20px;">▶ Simulate</button>
           <button id="btnClearLog" type="button" title="Clear the simulation log" style="background:#333;color:#0f3;border:1px solid #0f3;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:20px;">Clear Log</button>
         </div>
-        <div id="simLog" role="log" aria-live="polite" aria-atomic="false" style="flex:1;min-height:240px;max-height:60vh;overflow:auto;background:#111;border:2px solid #0f3;border-radius:12px;padding:18px;font-size:18px;font-family:monospace;color:#0f3;"></div>
+        <div id="simLog" style="flex:1;min-height:240px;max-height:60vh;overflow:auto;background:#111;border:2px solid #0f3;border-radius:12px;padding:18px;font-size:18px;font-family:monospace;color:#0f3;"></div>
       </div>
     </section>
   </div>
@@ -303,15 +301,18 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
   <section class="panel" id="panelO">
     <div class="title">Oils</div>
     <div class="oils" id="oilsO">
-      <div class="oil" data-kind="attack"><img src="assets/attack.png" alt="Attack Oil"><span>Attack Oil</span></div>
-      <div class="oil" data-kind="armor"><img src="assets/armor.png" alt="Armor Oil"><span>Armor Oil</span></div>
-      <div class="oil" data-kind="speed"><img src="assets/speed.png" alt="Speed Oil"><span>Speed Oil</span></div>
+      <div class="oil" data-kind="attack"><img src="assets/attack.png"><span>Attack Oil</span></div>
+      <div class="oil" data-kind="armor"><img src="assets/armor.png"><span>Armor Oil</span></div>
+      <div class="oil" data-kind="speed"><img src="assets/speed.png"><span>Speed Oil</span></div>
+    </div>
+    <div class="panel-actions" style="display:flex; gap:8px; margin-top:8px;">
+      <button id="resetOBtn" type="button" title="Clear the opponent's weapon, items, oils, and edge">Reset Opponent</button>
     </div>
     <div class="weapon-slot" id="weaponO">Drop a Weapon</div>
     <div class="edge-tile">
       <div class="edge-body">
-        <img id="edgeOIcon" src="assets/placeholder.png" alt="Edge icon">
-        <select id="edgeO" aria-label="Edge"><option value="">Select Edge</option></select>
+        <img id="edgeOIcon" src="assets/placeholder.png" alt="">
+        <select id="edgeO"><option value="">— Select Edge —</option></select>
       </div>
       <div id="edgeOEffect" class="meta effect"></div>
     </div>
@@ -352,13 +353,6 @@ let RAW_DATA = {};
 let DATA_ARR = [];
 async function loadData() {
   try {
-    // Disable actions while loading
-    try {
-      document.getElementById('btnSimulate')?.setAttribute('disabled','disabled');
-      document.getElementById('randBuildBtn')?.setAttribute('disabled','disabled');
-      document.getElementById('randEnemyBtn')?.setAttribute('disabled','disabled');
-      document.body?.setAttribute('aria-busy','true');
-    } catch(_){ }
     // If pre-bundled details are present (e.g., when opened via file://), use them.
     if (window.HEIC_DETAILS && typeof window.HEIC_DETAILS === 'object') {
       RAW_DATA = window.HEIC_DETAILS;
@@ -408,30 +402,16 @@ async function loadData() {
     // Compute initial totals for player and opponent (empty builds)
     updateTotals('P');
     updateTotals('O');
-    // Re-enable actions now that data is ready
-    try {
-      document.getElementById('btnSimulate')?.removeAttribute('disabled');
-      document.getElementById('randBuildBtn')?.removeAttribute('disabled');
-      document.getElementById('randEnemyBtn')?.removeAttribute('disabled');
-      document.body?.removeAttribute('aria-busy');
-    } catch(_){ }
   } catch(err) {
     console.error('Error loading details.json', err);
     const msg = document.createElement('div');
     msg.style.color = '#f66';
     msg.style.padding = '8px';
     msg.textContent = 'Failed to load details.json. Please serve files via a local server (e.g., python -m http.server) instead of opening via file://';
-    try {
-      document.body.insertBefore(msg, document.body.firstChild);
-      document.getElementById('btnSimulate')?.setAttribute('disabled','disabled');
-    } catch(_){ }
+    document.body.insertBefore(msg, document.body.firstChild);
   }
 }
-if (document.readyState === 'loading') {
-  window.addEventListener('DOMContentLoaded', () => { try { sanitizeUI(); loadData(); } catch(_){} });
-} else {
-  try { sanitizeUI(); loadData(); } catch(_){ }
-}
+loadData();
 // Icons for stats
 const ICONS = { attack:'assets/attack.png', health:'assets/health.png', armor:'assets/armor.png', speed:'assets/speed.png' };
 
@@ -447,60 +427,6 @@ const detailEffect = $('#detailEffect');
 const detailStats = $('#detailStats');
 $('#detailClose').addEventListener('click', () => detailModal.style.display='none');
 detailModal.addEventListener('click', e => { if (e.target === detailModal) detailModal.style.display='none'; });
-// Close details on Escape for stability/UX
-document.addEventListener('keydown', (e) => {
-  try {
-    if (e.key === 'Escape' && detailModal && detailModal.style.display === 'flex') {
-      detailModal.style.display = 'none';
-    }
-  } catch(_){}
-});
-// Global image fallback: replace broken icons with placeholder
-document.addEventListener('error', (e) => {
-  const t = e.target;
-  if (t && t.tagName === 'IMG' && !t.dataset.fallback) {
-    t.dataset.fallback = '1';
-    t.src = 'assets/placeholder.png';
-  }
-}, true);
-
-// Normalize any garbled text due to encoding issues and prep helpers
-function sanitizeUI() {
-  try {
-    const h1 = document.querySelector('header h1');
-    if (h1) h1.textContent = 'He Is Coming - Loadout Builder (v5)';
-    const rb = document.getElementById('randBuildBtn');
-    if (rb) rb.textContent = 'Random Build';
-    const re = document.getElementById('randEnemyBtn');
-    if (re) re.textContent = 'Random Enemy';
-    const q = document.getElementById('q');
-    if (q) q.setAttribute('placeholder', 'Search name/effect/tag');
-    const edgeP = document.getElementById('edgeP');
-    if (edgeP) { const opt = edgeP.querySelector('option[value=""]'); if (opt) opt.textContent = 'Select Edge'; }
-    const edgeO = document.getElementById('edgeO');
-    if (edgeO) { const opt = edgeO.querySelector('option[value=""]'); if (opt) opt.textContent = 'Select Edge'; }
-  } catch(_){}
-}
-
-function showNoDataBanner() {
-  if (document.getElementById('noDataBanner')) return;
-  const banner = document.createElement('div');
-  banner.id = 'noDataBanner';
-  banner.style.cssText = 'background:#240;border-bottom:2px solid #f33;color:#faa;padding:8px 12px;position:sticky;top:0;z-index:1001';
-  banner.innerHTML = 'No data loaded. <a href="#" id="showTroubleshooting" style="color:#0f3;text-decoration:underline;">Troubleshooting</a>';
-  document.body.insertBefore(banner, document.body.firstChild);
-  const panel = document.createElement('div');
-  panel.id = 'troubleshootPanel';
-  panel.style.cssText = 'display:none;background:#111;border:2px solid #f33;border-radius:8px;color:#fff;padding:10px;margin:10px';
-  panel.innerHTML = '<b>How to fix</b><ol style="margin:6px 0 0 18px;">'
-    + '+<li>Serve locally: <code>python -m http.server</code> or <code>npx http-server</code>.</li>'
-    + '+<li>Or include <code>details.js</code> next to <code>index.html</code> and keep <code>&lt;script src="details.js"&gt;</code> before other scripts.</li>'
-    + '+<li>Ensure <code>details.json</code> is present and not blocked by CORS if deployed.</li>'
-    + '</ol>';
-  document.body.insertBefore(panel, document.body.firstChild.nextSibling);
-  const link = document.getElementById('showTroubleshooting');
-  if (link) link.addEventListener('click', (e)=>{ e.preventDefault(); panel.style.display = (panel.style.display==='none')?'block':'none'; });
-}
 
 // Number of item slots available per side.  Displayed as empty dashed boxes until filled.
 const SLOT_COUNT = 12;
@@ -533,10 +459,10 @@ function updateTotals(sideKey) {
     if (side.oils.has('speed')) spd += 1;
   }
   const prefix = sideKey === 'P' ? 'p' : 'o';
-  const elH = document.getElementById(prefix+'H'); if (elH) elH.textContent = hp;
-  const elA = document.getElementById(prefix+'A'); if (elA) elA.textContent = atk;
-  const elR = document.getElementById(prefix+'R'); if (elR) elR.textContent = arm;
-  const elS = document.getElementById(prefix+'S'); if (elS) elS.textContent = spd;
+  $('#'+prefix+'H').textContent = hp;
+  $('#'+prefix+'A').textContent = atk;
+  $('#'+prefix+'R').textContent = arm;
+  $('#'+prefix+'S').textContent = spd;
 
   // Render set bonuses summary
   try {
@@ -557,7 +483,7 @@ function updateTotals(sideKey) {
           const chip = document.createElement('span');
           chip.className = 'setChip';
           const iconSlug = d.effectSlug || (`sets/${d.key}`);
-          chip.innerHTML = `<img src="${iconSlug}/icon.png" alt="${d.name}"><span class="name">${d.name}</span><span class="desc">- ${d.desc}</span>`;
+          chip.innerHTML = `<img src="${iconSlug}/icon.png" alt="${d.name}"><span class="name">${d.name}</span><span class="desc">� ${d.desc}</span>`;
           box.appendChild(chip);
         });
       }
@@ -714,25 +640,11 @@ function showDetail(entry) {
 }
 
 function renderGrid() {
-  // Defensive guards in case controls are missing
-  if (!grid || !countSpan) return;
-  const term = (searchIn && searchIn.value ? searchIn.value : '').trim().toLowerCase();
-  const bucketVal = bucketSel && bucketSel.value ? bucketSel.value : 'All';
-  const catVal = catSel && catSel.value ? catSel.value : 'All';
+  const term = searchIn.value.trim().toLowerCase();
+  const bucketVal = bucketSel.value;
+  const catVal = catSel.value;
   let shown = 0;
   grid.innerHTML = '';
-  // Defensive: if data failed to load, show a helpful message
-  if (!Array.isArray(DATA_ARR) || DATA_ARR.length === 0) {
-    try { showNoDataBanner(); } catch(_){}
-    const msg = document.createElement('div');
-    msg.style.color = '#f88';
-    msg.style.padding = '8px';
-    msg.textContent = 'No data loaded. If you opened this file directly, please serve via a local server or ensure details.js is present.';
-    grid.appendChild(msg);
-    countSpan.textContent = 'Shown: 0 / Total: 0';
-    return;
-  }
-  try {
   DATA_ARR.forEach(entry => {
     if (bucketVal !== 'All' && entry.bucket !== bucketVal) return;
     if (catVal !== 'All') {
@@ -845,24 +757,15 @@ function renderGrid() {
     card.addEventListener('click', () => showDetail(entry));
     grid.appendChild(card);
   });
-  } catch(err) {
-    console.error('renderGrid failed', err);
-    const msg = document.createElement('div');
-    msg.style.color = '#f88';
-    msg.style.padding = '8px';
-    msg.textContent = 'Error rendering list. Check console for details.';
-    grid.appendChild(msg);
-  }
-  countSpan.textContent = `Shown: ${shown} / Total: ${DATA_ARR.length}`;
+  countSpan.textContent = `Shown: ${shown}`;
 }
 
 // Filter listeners
-[searchIn, bucketSel, catSel].forEach(el => { if (el) el.addEventListener('input', renderGrid); });
+[searchIn, bucketSel, catSel].forEach(el => el.addEventListener('input', renderGrid));
 
 // Drag and drop helpers
 function setupDrop(zoneSel, sideKey, type) {
   const zone = $(zoneSel);
-  if (!zone) return;
   zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', ()=> zone.classList.remove('drag-over'));
   zone.addEventListener('drop', e => {
@@ -911,9 +814,7 @@ setupDrop('#gridO','O','items');
 
 // Oils toggles
 function setupOils(sel, sideKey) {
-  const root = $(sel);
-  if (!root) return;
-  root.querySelectorAll('.oil').forEach(el => {
+  $(sel).querySelectorAll('.oil').forEach(el => {
     el.addEventListener('click', () => {
       const kind = el.dataset.kind;
       const side = sides[sideKey];
@@ -938,7 +839,6 @@ function populateEdges() {
   const effects  = [$('#edgePEffect'), $('#edgeOEffect')];
   const icons    = [$('#edgePIcon'), $('#edgeOIcon')];
   selects.forEach((sel, idx) => {
-    if (!sel) return;
     // Clear existing options except the first placeholder
     while (sel.options.length > 1) sel.remove(1);
     edges.forEach(e => {
@@ -953,7 +853,7 @@ function populateEdges() {
       const pick = edges.find(e => e.slug === sel.value);
       const sideKey = idx === 0 ? 'P' : 'O';
       sides[sideKey].edge = pick || null;
-      if (effects[idx]) effects[idx].textContent = pick ? (pick.effect || '') : '';
+      effects[idx].textContent = pick ? (pick.effect || '') : '';
       const iconEl = icons[idx];
       if (pick) {
         iconEl.src = `${pick.bucket}/${pick.slug}/icon.png`;
@@ -964,6 +864,32 @@ function populateEdges() {
   });
 }
 // populateEdges is invoked from loadData() once DATA_ARR is ready
+// Clear a side (weapon, items, oils, edge) and UI
+function resetSide(targetSide){
+  const side = sides[targetSide];
+  if (!side) return;
+  side.weapon = null;
+  side.items = new Array(SLOT_COUNT).fill(null);
+  side.oils.clear();
+  side.edge = null;
+  const wSlot = targetSide === 'P' ? #weaponP : #weaponO;
+  if (wSlot) wSlot.textContent = 'Drop a Weapon';
+  const oilsEl = targetSide === 'P' ? #oilsP : #oilsO;
+  try { oilsEl?.querySelectorAll('.oil.active').forEach(el => el.classList.remove('active')); } catch(_){}
+  if (targetSide === 'P') {
+    #edgeP.value = '';
+    #edgePEffect.textContent = '';
+    #edgePIcon.src = 'assets/placeholder.png';
+  } else {
+    #edgeO.value = '';
+    #edgeOEffect.textContent = '';
+    #edgeOIcon.src = 'assets/placeholder.png';
+  }
+  resetSlots(targetSide);
+  activeTarget = { side: null, idx: -1 };
+  updateSelIndicators();
+  updateTotals(targetSide);
+}
 
 // Randomize a side's loadout
 function randomizeSide(targetSide){
@@ -1018,6 +944,8 @@ function randomizeSide(targetSide){
 }
 document.getElementById('randBuildBtn')?.addEventListener('click', () => randomizeSide('P'));
 document.getElementById('randEnemyBtn')?.addEventListener('click', () => randomizeSide('O'));
+document.getElementById('resetPBtn')?.addEventListener('click', () => resetSide('P'));
+document.getElementById('resetOBtn')?.addEventListener('click', () => resetSide('O'));
 
 // Collect the current loadout and computed statistics for simulation.  The simulator
 // expects an object with a name, a stats object (hp, atk, armor, speed), the
@@ -1295,28 +1223,7 @@ if (clearBtn) {
   function toGray(data){ const out=new Float32Array(data.length/4); for(let i=0,j=0;i<data.length;i+=4,j++){ out[j]=(0.299*data[i]+0.587*data[i+1]+0.114*data[i+2]); } return out; }
   function hashFromCanvas(csrc){ const N=16; const c2=document.createElement('canvas'); c2.width=N; c2.height=N; const cx2=c2.getContext('2d'); cx2.imageSmoothingEnabled=true; cx2.drawImage(csrc,0,0,N,N); const d=cx2.getImageData(0,0,N,N).data; const g=toGray(d); let mean=0; for(let i=0;i<g.length;i++) mean+=g[i]; mean/=g.length; let sd=0; for(let i=0;i<g.length;i++){ const v=g[i]-mean; sd+=v*v; } sd=Math.sqrt(sd/g.length)||1; for(let i=0;i<g.length;i++) g[i]=(g[i]-mean)/sd; return g; }
   function loadCache(){ try { const meta=JSON.parse(localStorage.getItem('HEIC_FP_META')||'null'); const data=JSON.parse(localStorage.getItem('HEIC_FPCACHE_V1')||'null'); if(!meta||!data) return null; const expect=Object.keys(RAW_DATA||{}).filter(k=>/(^items\/|^weapons\/|^upgrades\/)/.test(k)).length; if (meta.len!==expect) return null; return data; } catch(_){ return null; } }
-// Persist the fingerprint library to localStorage.
-// Use a multi-line implementation here rather than a heavily minified one to
-// avoid parser confusion from comment delimiters and regular expressions.  See
-// https://developer.mozilla.org/en-US/docs/Web/API/Window/localStorage for API
-// details.
-function saveCache(list) {
-  try {
-    // Count how many fingerprintable entries exist in RAW_DATA.  Only items,
-    // weapons and upgrades are considered for the cache.
-    const len = Object.keys(RAW_DATA || {}).filter(k => {
-      return /(^items\/|^weapons\/|^upgrades\/)/.test(k);
-    }).length;
-    // Store a small meta record with a version and the expected length.  This
-    // allows us to detect stale caches later on.
-    localStorage.setItem('HEIC_FP_META', JSON.stringify({ v: 1, len }));
-    // Persist the fingerprint list itself under a separate key.
-    localStorage.setItem('HEIC_FPCACHE_V1', JSON.stringify(list));
-  } catch (e) {
-    // Intentionally ignore any storage errors (quota exceeded, disabled, etc).
-    // Swallowing exceptions here prevents the cache failure from breaking the UI.
-  }
-}
+  function saveCache(list){ try { const len=Object.keys(RAW_DATA||{}).filter(k=>/(^items\/|^weapons\/|^upgrades\/)/.test(k)).length; localStorage.setItem('HEIC_FP_META', JSON.stringify({ v:1, len })); localStorage.setItem('HEIC_FPCACHE_V1', JSON.stringify(list)); } catch(_){ /* ignore */ } }
   async function buildIconLib(){ if(iconLib) return iconLib; const cached=loadCache(); if (cached) { iconLib=cached; log(`Icon library loaded from cache (${iconLib.length}).`); return iconLib; } const list=[]; for(const [k,v] of Object.entries(RAW_DATA||{})){ if(!/(^items\/|^weapons\/|^upgrades\/)/.test(k)) continue; const path=`${v.bucket}/${v.slug}/icon.png`; const im=new Image(); await new Promise(res=>{ im.onload=res; im.onerror=res; im.src=path; }); if (!im.width) continue; const tmp=document.createElement('canvas'); tmp.width=im.width||32; tmp.height=im.height||32; const tx=tmp.getContext('2d'); tx.imageSmoothingEnabled=false; tx.drawImage(im,0,0,tmp.width,tmp.height); const fp=hashFromCanvas(tmp); list.push({ slug:k, fp, path }); } iconLib=list; saveCache(list); log(`Icon library ready (${list.length}).`); return iconLib; }
   async function buildOilsLib(){ if (oilsLib) return oilsLib; const entries=[{slug:'oil-attack',path:'assets/attack.png',kind:'attack'},{slug:'oil-armor',path:'assets/armor.png',kind:'armor'},{slug:'oil-speed',path:'assets/speed.png',kind:'speed'}]; const out=[]; for(const e of entries){ const im=new Image(); await new Promise(res=>{ im.onload=res; im.onerror=res; im.src=e.path; }); const tmp=document.createElement('canvas'); tmp.width=im.width||22; tmp.height=im.height||22; const tx=tmp.getContext('2d'); tx.imageSmoothingEnabled=false; tx.drawImage(im,0,0,tmp.width,tmp.height); const fp=hashFromCanvas(tmp); out.push({ slug:e.slug, fp, path:e.path, kind:e.kind }); } oilsLib=out; return out; }
   function viewToSrcRect(x,y,w,h){ if (!srcCanvas.width || !canvas.width) return {sx:0,sy:0,sw:1,sh:1}; const sx = Math.max(0, Math.round(x * srcCanvas.width / canvas.width)); const sy = Math.max(0, Math.round(y * srcCanvas.height / canvas.height)); const sw = Math.max(1, Math.round(w * srcCanvas.width / canvas.width)); const sh = Math.max(1, Math.round(h * srcCanvas.height / canvas.height)); return {sx,sy,sw,sh}; }
@@ -1428,7 +1335,7 @@ function saveCache(list) {
     const it1=WIZ.rects.item1, it2=WIZ.rects.item2; const weapon=WIZ.rects.weapon; if (it1 && it2){ const step=Math.max(8, Math.round(it2.y - it1.y)); const tileW=it1.w; ROIS[`${sKey}-items`] = { x:it1.x, y:it1.y, w:tileW, h:step*12, rows:12, cols:1 }; }
     if (weapon) ROIS[`${sKey}-weapon`]=weapon; if (WIZ.rects.oils) ROIS[`${sKey}-oils`]=Object.assign({},WIZ.rects.oils,{rows:3,cols:1}); if (WIZ.rects.edge) ROIS[`${sKey}-edge`]=WIZ.rects.edge; WIZ.active=false; WIZ.step=0; wizSetHint(); render(); scanAndApply(); }
 
-  // Quick mode: build a 12?1 grid from a single weapon-tile rectangle
+  // Quick mode: build a 12�1 grid from a single weapon-tile rectangle
   function onQuickWeaponRect(rect){
     if (!QUICK.active || !rect) { QUICK.active=false; if (quickHint) quickHint.textContent=''; return; }
     let {x,y,w,h}=rect; if (w<0){x+=w;w=-w;} if (h<0){y+=h;h=-h;}
@@ -1474,9 +1381,6 @@ if (tabCompendium && tabSimulation && compendiumTab && simulationTab) {
     tabCompendium.style.color = '#f33';
     tabSimulation.style.background = '#111';
     tabSimulation.style.color = '#0f3';
-    // a11y: update tab selection state
-    tabCompendium.setAttribute('aria-selected', 'true');
-    tabSimulation.setAttribute('aria-selected', 'false');
     // tabImport removed
   });
   tabSimulation.addEventListener('click', () => {
@@ -1487,9 +1391,6 @@ if (tabCompendium && tabSimulation && compendiumTab && simulationTab) {
     tabCompendium.style.color = '#f33';
     tabSimulation.style.background = '#111';
     tabSimulation.style.color = '#0f3';
-    // a11y: update tab selection state
-    tabCompendium.setAttribute('aria-selected', 'false');
-    tabSimulation.setAttribute('aria-selected', 'true');
     // tabImport removed
   });
 }
@@ -1501,9 +1402,6 @@ if (showSimBtn && simulationTab && compendiumTab) {
     tabCompendium.style.color = '#f33';
     tabSimulation.style.background = '#111';
     tabSimulation.style.color = '#0f3';
-    // a11y: update tab selection state
-    tabCompendium.setAttribute('aria-selected', 'false');
-    tabSimulation.setAttribute('aria-selected', 'true');
   });
 }
 
@@ -1512,3 +1410,4 @@ if (showSimBtn && simulationTab && compendiumTab) {
 
 </body>
 </html>
+
