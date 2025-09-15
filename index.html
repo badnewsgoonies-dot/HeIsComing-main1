@@ -352,92 +352,64 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
 let RAW_DATA = {};
 let DATA_ARR = [];
 async function loadData() {
-  const getEmbeddedDetails = () => {
-    try {
-      if (window.HEIC_DETAILS && typeof window.HEIC_DETAILS === 'object') return window.HEIC_DETAILS;
-    } catch(_) {}
-    return null;
-  };
-  const preferEmbedded = (typeof window !== 'undefined' && window.location && window.location.protocol === 'file:');
-  let baseData = null;
-  if (preferEmbedded) {
-    baseData = getEmbeddedDetails();
-    if (!baseData) {
-      console.warn('Embedded details payload missing while running from file://, attempting fetch.');
-    }
-  }
-  if (!baseData) {
-    try {
+  try {
+    if (window.HEIC_DETAILS && typeof window.HEIC_DETAILS === 'object') {
+      RAW_DATA = window.HEIC_DETAILS;
+    } else {
       const res = await fetch('details.json', { cache: 'no-store' });
       if (!res.ok) throw new Error('Failed to load details.json: ' + res.status);
-      baseData = await res.json();
-      try { window.HEIC_DETAILS = baseData; } catch(_) {}
-    } catch(fetchErr) {
-      const fallback = getEmbeddedDetails();
-      if (fallback) {
-        baseData = fallback;
-        console.warn('Falling back to embedded details payload', fetchErr);
-        if (!document.getElementById('loadoutFallbackNotice')) {
-          const note = document.createElement('div');
-          note.id = 'loadoutFallbackNotice';
-          note.style.color = '#f66';
-          note.style.padding = '8px';
-          note.textContent = 'Using built-in compendium data. For live updates serve the files via a local server.';
-          document.body.insertBefore(note, document.body.firstChild);
-        }
-      } else {
-        console.error('Error loading details.json', fetchErr);
-        if (!document.getElementById('loadoutErrorNotice')) {
-          const msg = document.createElement('div');
-          msg.id = 'loadoutErrorNotice';
-          msg.style.color = '#f66';
-          msg.style.padding = '8px';
-          msg.textContent = 'Failed to load details.json. Please serve files via a local server (e.g., python -m http.server) instead of opening via file://';
-          document.body.insertBefore(msg, document.body.firstChild);
-        }
-        return;
-      }
+      RAW_DATA = await res.json();
+      try { window.HEIC_DETAILS = RAW_DATA; } catch(_) {}
     }
-  }
-  if (!baseData) {
-    console.error('Compendium data unavailable.');
-    return;
-  }
-  RAW_DATA = baseData || {};
-  try {
-    const resO = await fetch('stats_overrides.json', { cache: 'no-store' });
-    if (resO.ok) {
-      const overrides = await resO.json();
-      for (const [k, statObj] of Object.entries(overrides || {})) {
-        if (RAW_DATA[k]) {
-          const baseStats = RAW_DATA[k].stats || {};
-          RAW_DATA[k].stats = Object.assign({}, baseStats, statObj);
+    try {
+      const resO = await fetch('stats_overrides.json', { cache: 'no-store' });
+      if (resO.ok) {
+        const overrides = await resO.json();
+        for (const [k, statObj] of Object.entries(overrides || {})) {
+          if (RAW_DATA[k]) {
+            const baseStats = RAW_DATA[k].stats || {};
+            RAW_DATA[k].stats = Object.assign({}, baseStats, statObj);
+          }
         }
       }
+    } catch (_) {}
+    DATA_ARR = Object.entries(RAW_DATA).map(([key, val]) => { val.key = key; return val; });
+    window.TIERABLE = new Set();
+    const keys = Object.keys(RAW_DATA);
+    const hasVariant = (slug) => keys.some(k => /^(items|weapons)\//.test(k) && (k.endsWith(slug + '_gold') || k.endsWith(slug + '_diamond')));
+    for (const [k, v] of Object.entries(RAW_DATA)) {
+      if (!v || typeof v !== 'object') continue;
+      const eff = (v.effect || '');
+      const m = /^(items|weapons)\/(.+)$/.exec(k);
+      const baseSlug = m ? m[2] : '';
+      if (/gold|diamond/i.test(eff) || hasVariant(baseSlug)) {
+        window.TIERABLE.add(k);
+      }
     }
-  } catch(oerr) { /* stats_overrides is optional */ }
-  DATA_ARR = Object.entries(RAW_DATA).map(([key, val]) => { val.key = key; return val; });
-  window.TIERABLE = new Set();
-  const keys = Object.keys(RAW_DATA);
-  const hasVariant = (slug) => keys.some(k => /^(items|weapons)\//.test(k) && (k.endsWith(slug + '_gold') || k.endsWith(slug + '_diamond')));
-  for (const [k, v] of Object.entries(RAW_DATA)) {
-    if (!v || typeof v !== 'object') continue;
-    const eff = (v.effect || '');
-    const m = /^(items|weapons)\/(.+)$/.exec(k);
-    const baseSlug = m ? m[2] : '';
-    if (/gold|diamond/i.test(eff) || hasVariant(baseSlug)) {
-      window.TIERABLE.add(k);
-    }
+    console.log('HeIC: loaded entries =', DATA_ARR.length);
+    populateEdges();
+    initSlots();
+    renderGrid();
+    updateTotals('P');
+    updateTotals('O');
+  } catch (err) {
+    console.error('Error loading details.json', err);
   }
-  populateEdges();
-  initSlots();
-  renderGrid();
-  updateTotals('P');
-  updateTotals('O');
 }
-loadData();
-/ Icons for stats
-const ICONS = { attack:'assets/attack.png', health:'assets/health.png', armor:'assets/armor.png', speed:'assets/speed.png' };
+function bootLoadoutBuilder() {
+  try {
+    loadData();
+  } catch (err) {
+    console.error('Failed to initialize loadout builder', err);
+  }
+}
+if (document.readyState === 'loading') {
+  window.addEventListener('DOMContentLoaded', bootLoadoutBuilder);
+} else {
+  bootLoadoutBuilder();
+}
+// Icons for stats
+const ICONS = { attack:'attack.png', health:'health.png', armor:'armor.png', speed:'speed.png' };
 
 const $ = sel => document.querySelector(sel);
 const grid = $('#grid');
@@ -686,7 +658,7 @@ function renderGrid() {
     // Icon
     const icon = document.createElement('img');
     icon.src = `${entry.bucket}/${entry.slug}/icon.png`;
-    icon.alt = entry.name;
+    icon.alt = entry.name;\r\n    icon.onerror = () => { icon.onerror = null; icon.src = 'placeholder.png'; };
     icon.style.width = '48px';
     icon.style.height = '48px';
     icon.style.imageRendering = 'pixelated';
@@ -731,10 +703,10 @@ function renderGrid() {
     const statRow1 = document.createElement('div'); statRow1.style.display='flex'; statRow1.style.gap='16px'; statRow1.style.marginBottom='8px';
     const statRow2 = document.createElement('div'); statRow2.style.display='flex'; statRow2.style.gap='16px';
     const statOrder = [
-      { key:'attack', label:'Attack', color:'#f33', icon:'assets/attack.png' },
-      { key:'armor', label:'Armor', color:'#3af', icon:'assets/armor.png' },
-      { key:'health', label:'Health', color:'#95d5b2', icon:'assets/health.png' },
-      { key:'speed', label:'Speed', color:'#ffd166', icon:'assets/speed.png' }
+      { key:'attack', label:'Attack', color:'#f33', icon:'attack.png' },
+      { key:'armor', label:'Armor', color:'#3af', icon:'armor.png' },
+      { key:'health', label:'Health', color:'#95d5b2', icon:'health.png' },
+      { key:'speed', label:'Speed', color:'#ffd166', icon:'speed.png' }
     ];
     statOrder.forEach((st, idx) => {
       const val = entry.stats && typeof entry.stats[st.key] === 'number' ? entry.stats[st.key] : 0;
@@ -1434,5 +1406,13 @@ if (showSimBtn && simulationTab && compendiumTab) {
 
 </body>
 </html>
+
+
+
+
+
+
+
+
 
 
