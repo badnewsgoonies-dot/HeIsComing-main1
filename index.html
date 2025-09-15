@@ -352,6 +352,13 @@ let RAW_DATA = {};
 let DATA_ARR = [];
 async function loadData() {
   try {
+    // Disable actions while loading
+    try {
+      document.getElementById('btnSimulate')?.setAttribute('disabled','disabled');
+      document.getElementById('randBuildBtn')?.setAttribute('disabled','disabled');
+      document.getElementById('randEnemyBtn')?.setAttribute('disabled','disabled');
+      document.body?.setAttribute('aria-busy','true');
+    } catch(_){ }
     // If pre-bundled details are present (e.g., when opened via file://), use them.
     if (window.HEIC_DETAILS && typeof window.HEIC_DETAILS === 'object') {
       RAW_DATA = window.HEIC_DETAILS;
@@ -401,13 +408,23 @@ async function loadData() {
     // Compute initial totals for player and opponent (empty builds)
     updateTotals('P');
     updateTotals('O');
+    // Re-enable actions now that data is ready
+    try {
+      document.getElementById('btnSimulate')?.removeAttribute('disabled');
+      document.getElementById('randBuildBtn')?.removeAttribute('disabled');
+      document.getElementById('randEnemyBtn')?.removeAttribute('disabled');
+      document.body?.removeAttribute('aria-busy');
+    } catch(_){ }
   } catch(err) {
     console.error('Error loading details.json', err);
     const msg = document.createElement('div');
     msg.style.color = '#f66';
     msg.style.padding = '8px';
     msg.textContent = 'Failed to load details.json. Please serve files via a local server (e.g., python -m http.server) instead of opening via file://';
-    document.body.insertBefore(msg, document.body.firstChild);
+    try {
+      document.body.insertBefore(msg, document.body.firstChild);
+      document.getElementById('btnSimulate')?.setAttribute('disabled','disabled');
+    } catch(_){ }
   }
 }
 if (document.readyState === 'loading') {
@@ -430,18 +447,34 @@ const detailEffect = $('#detailEffect');
 const detailStats = $('#detailStats');
 $('#detailClose').addEventListener('click', () => detailModal.style.display='none');
 detailModal.addEventListener('click', e => { if (e.target === detailModal) detailModal.style.display='none'; });
+// Close details on Escape for stability/UX
+document.addEventListener('keydown', (e) => {
+  try {
+    if (e.key === 'Escape' && detailModal && detailModal.style.display === 'flex') {
+      detailModal.style.display = 'none';
+    }
+  } catch(_){}
+});
+// Global image fallback: replace broken icons with placeholder
+document.addEventListener('error', (e) => {
+  const t = e.target;
+  if (t && t.tagName === 'IMG' && !t.dataset.fallback) {
+    t.dataset.fallback = '1';
+    t.src = 'assets/placeholder.png';
+  }
+}, true);
 
 // Normalize any garbled text due to encoding issues and prep helpers
 function sanitizeUI() {
   try {
     const h1 = document.querySelector('header h1');
-    if (h1) h1.textContent = 'He Is Coming � Loadout Builder (v5)';
+    if (h1) h1.textContent = 'He Is Coming - Loadout Builder (v5)';
     const rb = document.getElementById('randBuildBtn');
     if (rb) rb.textContent = 'Random Build';
     const re = document.getElementById('randEnemyBtn');
     if (re) re.textContent = 'Random Enemy';
     const q = document.getElementById('q');
-    if (q) q.setAttribute('placeholder', 'Search name/effect/tag�');
+    if (q) q.setAttribute('placeholder', 'Search name/effect/tag');
     const edgeP = document.getElementById('edgeP');
     if (edgeP) { const opt = edgeP.querySelector('option[value=""]'); if (opt) opt.textContent = 'Select Edge'; }
     const edgeO = document.getElementById('edgeO');
@@ -500,10 +533,10 @@ function updateTotals(sideKey) {
     if (side.oils.has('speed')) spd += 1;
   }
   const prefix = sideKey === 'P' ? 'p' : 'o';
-  $('#'+prefix+'H').textContent = hp;
-  $('#'+prefix+'A').textContent = atk;
-  $('#'+prefix+'R').textContent = arm;
-  $('#'+prefix+'S').textContent = spd;
+  const elH = document.getElementById(prefix+'H'); if (elH) elH.textContent = hp;
+  const elA = document.getElementById(prefix+'A'); if (elA) elA.textContent = atk;
+  const elR = document.getElementById(prefix+'R'); if (elR) elR.textContent = arm;
+  const elS = document.getElementById(prefix+'S'); if (elS) elS.textContent = spd;
 
   // Render set bonuses summary
   try {
@@ -524,7 +557,7 @@ function updateTotals(sideKey) {
           const chip = document.createElement('span');
           chip.className = 'setChip';
           const iconSlug = d.effectSlug || (`sets/${d.key}`);
-          chip.innerHTML = `<img src="${iconSlug}/icon.png" alt="${d.name}"><span class="name">${d.name}</span><span class="desc">� ${d.desc}</span>`;
+          chip.innerHTML = `<img src="${iconSlug}/icon.png" alt="${d.name}"><span class="name">${d.name}</span><span class="desc">- ${d.desc}</span>`;
           box.appendChild(chip);
         });
       }
@@ -681,9 +714,11 @@ function showDetail(entry) {
 }
 
 function renderGrid() {
-  const term = searchIn.value.trim().toLowerCase();
-  const bucketVal = bucketSel.value;
-  const catVal = catSel.value;
+  // Defensive guards in case controls are missing
+  if (!grid || !countSpan) return;
+  const term = (searchIn && searchIn.value ? searchIn.value : '').trim().toLowerCase();
+  const bucketVal = bucketSel && bucketSel.value ? bucketSel.value : 'All';
+  const catVal = catSel && catSel.value ? catSel.value : 'All';
   let shown = 0;
   grid.innerHTML = '';
   // Defensive: if data failed to load, show a helpful message
@@ -697,6 +732,7 @@ function renderGrid() {
     countSpan.textContent = 'Shown: 0 / Total: 0';
     return;
   }
+  try {
   DATA_ARR.forEach(entry => {
     if (bucketVal !== 'All' && entry.bucket !== bucketVal) return;
     if (catVal !== 'All') {
@@ -809,15 +845,24 @@ function renderGrid() {
     card.addEventListener('click', () => showDetail(entry));
     grid.appendChild(card);
   });
+  } catch(err) {
+    console.error('renderGrid failed', err);
+    const msg = document.createElement('div');
+    msg.style.color = '#f88';
+    msg.style.padding = '8px';
+    msg.textContent = 'Error rendering list. Check console for details.';
+    grid.appendChild(msg);
+  }
   countSpan.textContent = `Shown: ${shown} / Total: ${DATA_ARR.length}`;
 }
 
 // Filter listeners
-[searchIn, bucketSel, catSel].forEach(el => el.addEventListener('input', renderGrid));
+[searchIn, bucketSel, catSel].forEach(el => { if (el) el.addEventListener('input', renderGrid); });
 
 // Drag and drop helpers
 function setupDrop(zoneSel, sideKey, type) {
   const zone = $(zoneSel);
+  if (!zone) return;
   zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
   zone.addEventListener('dragleave', ()=> zone.classList.remove('drag-over'));
   zone.addEventListener('drop', e => {
@@ -866,7 +911,9 @@ setupDrop('#gridO','O','items');
 
 // Oils toggles
 function setupOils(sel, sideKey) {
-  $(sel).querySelectorAll('.oil').forEach(el => {
+  const root = $(sel);
+  if (!root) return;
+  root.querySelectorAll('.oil').forEach(el => {
     el.addEventListener('click', () => {
       const kind = el.dataset.kind;
       const side = sides[sideKey];
@@ -891,6 +938,7 @@ function populateEdges() {
   const effects  = [$('#edgePEffect'), $('#edgeOEffect')];
   const icons    = [$('#edgePIcon'), $('#edgeOIcon')];
   selects.forEach((sel, idx) => {
+    if (!sel) return;
     // Clear existing options except the first placeholder
     while (sel.options.length > 1) sel.remove(1);
     edges.forEach(e => {
@@ -905,7 +953,7 @@ function populateEdges() {
       const pick = edges.find(e => e.slug === sel.value);
       const sideKey = idx === 0 ? 'P' : 'O';
       sides[sideKey].edge = pick || null;
-      effects[idx].textContent = pick ? (pick.effect || '') : '';
+      if (effects[idx]) effects[idx].textContent = pick ? (pick.effect || '') : '';
       const iconEl = icons[idx];
       if (pick) {
         iconEl.src = `${pick.bucket}/${pick.slug}/icon.png`;
@@ -1380,7 +1428,7 @@ function saveCache(list) {
     const it1=WIZ.rects.item1, it2=WIZ.rects.item2; const weapon=WIZ.rects.weapon; if (it1 && it2){ const step=Math.max(8, Math.round(it2.y - it1.y)); const tileW=it1.w; ROIS[`${sKey}-items`] = { x:it1.x, y:it1.y, w:tileW, h:step*12, rows:12, cols:1 }; }
     if (weapon) ROIS[`${sKey}-weapon`]=weapon; if (WIZ.rects.oils) ROIS[`${sKey}-oils`]=Object.assign({},WIZ.rects.oils,{rows:3,cols:1}); if (WIZ.rects.edge) ROIS[`${sKey}-edge`]=WIZ.rects.edge; WIZ.active=false; WIZ.step=0; wizSetHint(); render(); scanAndApply(); }
 
-  // Quick mode: build a 12�1 grid from a single weapon-tile rectangle
+  // Quick mode: build a 12?1 grid from a single weapon-tile rectangle
   function onQuickWeaponRect(rect){
     if (!QUICK.active || !rect) { QUICK.active=false; if (quickHint) quickHint.textContent=''; return; }
     let {x,y,w,h}=rect; if (w<0){x+=w;w=-w;} if (h<0){y+=h;h=-h;}
