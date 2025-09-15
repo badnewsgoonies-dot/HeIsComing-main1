@@ -1,0 +1,436 @@
+﻿// HeIC Simulation effect hooks
+//
+// This file defines behaviours for selected weapons and items. Each entry
+// corresponds to a slug used in the DETAILS database. The handlers
+// expose functions keyed by event phase: `battleStart`, `turnStart`,
+// `onHit`, `turnEnd`, etc. The main simulation engine calls these
+// handlers at the appropriate times via the `window.HeICSimHooks` object.
+
+// Attach hooks into global namespace if not already present
+(function(){
+  if(typeof window === 'undefined') return;
+  if(!window.HeICSimHooks) window.HeICSimHooks = {};
+  const hooks = window.HeICSimHooks;
+
+  // Example hook implementations. Adjust numerical values to match
+  // the official game where known. Only a handful of items are
+  // implemented; unlisted slugs will have no special behaviour.
+
+  // Bee Stinger (food weapon): first turn on hit, give enemy poison, acid and stun
+  hooks['items/bee_stinger'] = {
+    onHit({ self, other, log }){
+      if(self.flags.firstTurn){
+        other.addStatus('poison', 4);
+        other.addStatus('acid', 3);
+        other.addStatus('stun', 2);
+        log(`${other.name} gains 4 poison, 3 acid and 2 stun (Bee Stinger).`);
+      }
+    }
+  };
+
+  // Viper Extract: first time the enemy gains poison, give +3 poison
+  hooks['items/viper_extract'] = {
+    battleStart({ self }){
+      self._viperTriggered = false;
+    },
+    onGainStatus({ self, other, log, key, isNew }){
+      if(key === 'poison' && isNew && !self._viperTriggered){
+        other.addStatus('poison', 3);
+        self._viperTriggered = true;
+        log(`${other.name} gains +3 poison (Viper Extract).`);
+      }
+    }
+  };
+
+  // Boiled Ham: if battle start and the holder is exposed or wounded, reduce
+  // all statuses by 1 and log each decrease
+  hooks['items/boiled_ham'] = {
+    battleStart({ self, log }){
+      // Determine if exposed or wounded on start
+      const exposed = self.status && self.status.exposed > 0;
+      const wounded = self.status && self.status.wounded > 0;
+      if(exposed || wounded){
+        for(const k of Object.keys(self.s || {})){
+          if(self.s[k] && self.s[k] > 0){
+            self.s[k] -= 1;
+            log(`${self.name} decreases ${k} by 1 (Boiled Ham).`);
+          }
+        }
+      }
+    }
+  };
+
+  // Swiftstrike Belt: turn start, self-damage and grant extra strikes
+  hooks['items/swiftstrike_belt'] = {
+    turnStart({ self, log }){
+      // Deal 3 self-damage
+      if(self.hp > 0){
+        self.hp = Math.max(0, self.hp - 3);
+        log(`${self.name} takes 3 damage (Swiftstrike Belt).`);
+      }
+      // Grant one extra strike this turn
+      self.extraStrikes = (self.extraStrikes || 0) + 1;
+    }
+  };
+
+  // Limestone Fruit: if not at max health at turn start, gain 2 acid
+  hooks['items/limestone_fruit'] = {
+    turnStart({ self, log }){
+      const maxHP = self._startHP || self.hpMax || self.hp;
+      if(self.hp < maxHP){
+        self.s.acid = (self.s.acid || 0) + 2;
+        log(`${self.name} gains 2 acid (Limestone Fruit).`);
+      }
+    }
+  };
+
+  // Horned Melon: battle start, exposed or wounded: decrease two random statuses and add thorns
+    hooks['items/horned_melon'] = {
+      battleStart({ self, log }){
+        const keys = Object.keys(self.s || {}).filter(k => self.s[k] > 0);
+        for(let i=0; i<2 && keys.length>0; i++){
+          const idx = Math.floor(Math.random()*keys.length);
+          const key = keys[idx];
+          self.s[key] -= 1;
+          log(`${self.name} decreases ${key} by 1 (Horned Melon).`);
+          keys.splice(idx,1);
+        }
+        self.s.thorns = (self.s.thorns || 0) + 5;
+        log(`${self.name} gains 5 thorns (Horned Melon).`);
+      }
+    };
+
+    // Acidic Witherleaf: give enemy acid equal to your speed at battle start
+    hooks['items/acidic_witherleaf'] = {
+      battleStart({ self, other, log }){
+        if(self.speed > 0){
+          other.addStatus('acid', self.speed);
+          log(`${other.name} gains ${self.speed} acid (Acidic Witherleaf).`);
+        }
+      }
+    };
+
+    // Bramble Belt: gain 1 thorns and give enemy 1 extra strike at battle start
+    hooks['items/bramble_belt'] = {
+      battleStart({ self, other, log }){
+        self.addStatus('thorns', 1);
+        other.extraStrikes = (other.extraStrikes || 0) + 1;
+        log(`${self.name} gains 1 thorns and ${other.name} gains 1 extra strike (Bramble Belt).`);
+      }
+    };
+
+    // Bramble Buckler: convert 1 armor to 2 thorns each turn start
+    hooks['items/bramble_buckler'] = {
+      turnStart({ self, log }){
+        if(self.armor > 0){
+          self.armor -= 1;
+          self.addStatus('thorns', 2);
+          log(`${self.name} converts 1 armor to 2 thorns (Bramble Buckler).`);
+        }
+      }
+    };
+
+    // Bramble Talisman: whenever thorns are gained, gain 1 armor
+    hooks['items/bramble_talisman'] = {
+      onGainStatus({ self, log, key }){
+        if(key === 'thorns'){
+          self.addArmor(1);
+          log(`${self.name} gains 1 armor (Bramble Talisman).`);
+        }
+      }
+    };
+
+
+    // Acid Mutation: gain 1 acid at battle start and temp attack equal to acid
+    hooks['items/acid_mutation'] = {
+      battleStart({ self, log }){
+        self.addStatus('acid', 1);
+        log(`${self.name} gains 1 acid (Acid Mutation).`);
+      },
+      turnStart({ self }){
+        if(self.s.acid > 0){
+          self.addTempAtk(self.s.acid);
+        }
+      }
+    };
+
+    // Chainmail Cloak: if you have armor, restore 2 health each turn
+    hooks['items/chainmail_cloak'] = {
+      turnStart({ self, log }){
+        if(self.armor > 0){
+          const healed = self.heal(2);
+          if(healed>0) log(`${self.name} restores ${healed} health (Chainmail Cloak).`);
+        }
+      }
+    };
+
+    // Chainmail Armor: when wounded, regain base armor
+    hooks['items/chainmail_armor'] = {
+      battleStart({ self }){
+        self._chainmailBaseArmor = self.armor;
+      },
+      onWounded({ self, log }){
+        if(self._chainmailBaseArmor !== undefined){
+          self.armor = self._chainmailBaseArmor;
+          log(`${self.name} restores base armor (Chainmail Armor).`);
+        }
+      }
+    };
+
+    // Clearspring Duck: gain 1 armor and decrease a random status by 1 each turn
+    hooks['items/clearspring_duck'] = {
+      turnStart({ self, log }){
+        self.addArmor(1);
+        const keys = Object.keys(self.s).filter(k => self.s[k] > 0);
+        if(keys.length>0){
+          const key = keys[Math.floor(Math.random()*keys.length)];
+          self.s[key] -= 1;
+          log(`${self.name} decreases ${key} by 1 (Clearspring Duck).`);
+        }
+      }
+    };
+
+    // Clearspring Feather: give enemy a decreased status at battle start
+    hooks['items/clearspring_feather'] = {
+      battleStart({ self, other, log }){
+        const keys = Object.keys(self.s).filter(k => self.s[k] > 0);
+        if(keys.length>0){
+          const key = keys[Math.floor(Math.random()*keys.length)];
+          self.s[key] -= 1;
+          other.addStatus(key, 1);
+          log(`${self.name} transfers 1 ${key} to ${other.name} (Clearspring Feather).`);
+        }
+      }
+    };
+
+    // Clearspring Opal: spend 1 speed to reduce a random status
+    hooks['items/clearspring_opal'] = {
+      turnStart({ self, log }){
+        const keys = Object.keys(self.s).filter(k => self.s[k] > 0);
+        if(keys.length>0 && self.speed > 0){
+          self.speed -= 1;
+          const key = keys[Math.floor(Math.random()*keys.length)];
+          self.s[key] -= 1;
+          log(`${self.name} spends 1 speed to decrease ${key} by 1 (Clearspring Opal).`);
+        }
+      }
+    };
+
+    // Clearspring Watermelon: reduce a random status at start, when exposed or wounded
+    hooks['items/clearspring_watermelon'] = {
+      _reduce(self, log){
+        const keys = Object.keys(self.s).filter(k => self.s[k] > 0);
+        if(keys.length>0){
+          const key = keys[Math.floor(Math.random()*keys.length)];
+          self.s[key] -= 1;
+          log(`${self.name} decreases ${key} by 1 (Clearspring Watermelon).`);
+        }
+      }
+    };
+    hooks['items/clearspring_watermelon'].battleStart = ({ self, log }) => {
+      hooks['items/clearspring_watermelon']._reduce(self, log);
+    };
+    hooks['items/clearspring_watermelon'].onExposed = ({ self, log }) => {
+      hooks['items/clearspring_watermelon']._reduce(self, log);
+    };
+    hooks['items/clearspring_watermelon'].onWounded = ({ self, log }) => {
+      hooks['items/clearspring_watermelon']._reduce(self, log);
+    };
+
+    // Corroded Bone: convert half the enemy's health into your armor
+    hooks['items/corroded_bone'] = {
+      battleStart({ self, other, log }){
+        const converted = Math.floor(other.hp / 2);
+        if(converted>0){
+          other.hp -= converted;
+          self.addArmor(converted);
+          log(`${self.name} converts ${converted} enemy health into armor (Corroded Bone).`);
+        }
+      }
+    };
+
+    // Cracked Bouldershield: when exposed, gain 7 armor
+    hooks['items/cracked_bouldershield'] = {
+      onExposed({ self, log }){
+        self.addArmor(7);
+        log(`${self.name} gains 7 armor (Cracked Bouldershield).`);
+      }
+    };
+
+    // Cracked Whetstone: first turn, temporarily gain 2 attack
+    hooks['items/cracked_whetstone'] = {
+      turnStart({ self }){
+        if(self.flags.firstTurn){
+          self.addTempAtk(2);
+        }
+      }
+    };
+
+    // Bramble Vest: first time you lose thorns, heal equal to thorns lost
+    hooks['items/bramble_vest'] = {
+      turnEnd({ self, log }){
+        if(!self._brambleVestUsed && self.struckThisTurn && self.s.thorns>0){
+          const lost = self.s.thorns;
+          self.heal(lost);
+          self._brambleVestUsed = true;
+          log(`${self.name} restores ${lost} health (Bramble Vest).`);
+        }
+      }
+    };
+
+    // Briar Greaves: on hit, if you have thorns gain 1 armor
+    hooks['items/briar_greaves'] = {
+      onHit({ self, log }){
+        if(self.s.thorns>0){
+          self.addArmor(1);
+          log(`${self.name} gains 1 armor (Briar Greaves).`);
+        }
+      }
+    };
+
+    // Horned Helmet: battle start gain 1 thorns
+    hooks['items/horned_helmet'] = {
+      battleStart({ self, log }){
+        self.addStatus('thorns', 1);
+        log(`${self.name} gains 1 thorns (Horned Helmet).`);
+      }
+    };
+
+    // Ice Spikes: if you have freeze, gain 5 thorns at turn start
+    hooks['items/ice_spikes'] = {
+      turnStart({ self, log }){
+        if(self.s.freeze>0){
+          self.addStatus('thorns', 5);
+          log(`${self.name} gains 5 thorns (Ice Spikes).`);
+        }
+      }
+    };
+
+    // Explosive Fish: give enemy riptide and deal damage per stack
+    hooks['items/explosive_fish'] = {
+      battleStart({ self, other, log }){
+        other.addStatus('riptide', 1);
+        const dmg = other.s.riptide * 2;
+        self.damageOther(dmg);
+        log(`${other.name} takes ${dmg} damage (Explosive Fish).`);
+      }
+    };
+
+    // Deathcap Bow: gain poison at start and extra strike while poisoned
+    hooks['weapons/deathcap_bow'] = {
+      battleStart({ self, log }){
+        self.addStatus('poison', 3);
+        log(`${self.name} gains 3 poison (Deathcap Bow).`);
+      },
+      turnStart({ self }){
+        if(self.s.poison>0){
+          self.extraStrikes = (self.extraStrikes || 0) + 1;
+        }
+      }
+    };
+
+    // Blackbriar Armor: whenever you take damage, gain 2 thorns
+    hooks['items/blackbriar_armor'] = {
+      onDamaged({ self, log, armorLost, hpLost }){
+        if(armorLost>0 || hpLost>0){
+          self.addStatus('thorns', 2);
+          log(`${self.name} gains 2 thorns (Blackbriar Armor).`);
+        }
+      }
+    };
+
+    // Blackbriar Gauntlet: gain 2 thorns per armor lost to the enemy's first strike
+    hooks['items/blackbriar_gauntlet'] = {
+      battleStart({ self }){ self._bbgDone = false; },
+      onDamaged({ self, log, armorLost }){
+        if(!self._bbgDone){
+          const th = armorLost * 2;
+          if(th>0) {
+            self.addStatus('thorns', th);
+            log(`${self.name} gains ${th} thorns (Blackbriar Gauntlet).`);
+          }
+          self._bbgDone = true;
+        }
+      }
+    };
+
+    // Blackbriar Rose: whenever you heal, gain 2 thorns
+    hooks['items/blackbriar_rose'] = {
+      onHeal({ self, log, amount }){
+        if(amount>0){
+          self.addStatus('thorns', 2);
+          log(`${self.name} gains 2 thorns (Blackbriar Rose).`);
+        }
+      }
+    };
+
+    // Blacksmith Bond: exposed can trigger one additional time
+    hooks['items/blacksmith_bond'] = {
+      battleStart({ self }){
+        self._exposedLimit = (self._exposedLimit || 1) + 1;
+      }
+    };
+
+    // Blastcap Armor: on exposed take 5 damage
+    hooks['items/blastcap_armor'] = {
+      onExposed({ self, log }){
+        if(self.hp>0){
+          self.hp = Math.max(0, self.hp - 5);
+          log(`${self.name} takes 5 damage (Blastcap Armor).`);
+        }
+      }
+    };
+
+    // Bloodstone Ring: gain max health and heal at battle start
+    hooks['items/bloodstone_ring'] = {
+      battleStart({ self, log }){
+        self.hpMax += 5;
+        log(`${self.name} gains 5 max health (Bloodstone Ring).`);
+        const healed = self.heal(5);
+        if(healed>0) log(`${self.name} restores ${healed} health (Bloodstone Ring).`);
+      }
+    };
+
+
+  // Royal Scepter (weapon): on hit, lifesteal 1 hp
+  hooks['weapons/royal_scepter'] = {
+    onHit({ self, other, log }){
+      if(other.hp > 0){
+        other.hp -= 1;
+        self.hp += 1;
+        log(`${self.name} steals 1 health (Royal Scepter).`);
+      }
+    }
+  };
+
+  // Honeycomb: lose 3 hp at battle start and gain 3 regen
+  hooks['items/honeycomb'] = {
+    battleStart({ self, log }){
+      if(self.hp > 0){
+        self.hp = Math.max(0, self.hp - 3);
+        log(`${self.name} consumes Honeycomb and loses 3 HP.`);
+      }
+      self.addStatus('regen', 3);
+      log(`${self.name} gains 3 regen (Honeycomb).`);
+    }
+  };
+
+  // Lightning Rod: on hit, apply 1 stun to the enemy
+  hooks['weapons/lightning_rod'] = {
+    onHit({ other, log }){
+      other.addStatus('stun', 1);
+      log(`${other.name} is stunned (Lightning Rod).`);
+    }
+  };
+
+  // Stormcloud Spear: on hit, apply 2 riptide
+  hooks['weapons/stormcloud_spear'] = {
+    onHit({ other, log }){
+      other.addStatus('riptide', 2);
+      log(`${other.name} gains 2 riptide (Stormcloud Spear).`);
+    }
+  };
+
+  // Global hook: grant extra strikes based on speed every turn
+  // Global hook removed: strike bonuses from speed are now handled by the battle engine
+})();

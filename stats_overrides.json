@@ -1,0 +1,427 @@
+{
+  "items/bee_stinger": {
+    "attack": 3
+  },
+  "items/belt_of_gluttony": {
+    "health": 15
+  },
+  "items/bitter_melon": {
+    "attack": 3
+  },
+  "items/blackbriar_armor": {
+    "attack": -1
+  },
+  "items/blackbriar_bow": {
+    "attack": 4
+  },
+  "items/blastcap_armor": {
+    "armor": 8
+  },
+  "items/bloodmoon_armor": {
+    "armor": 6
+  },
+  "items/bloody_steak": {
+    "attack": 4,
+    "health": 5
+  },
+  "items/boiled_ham": {
+    "health": 5
+  },
+  "items/boots_of_sloth": {
+    "speed": 10
+  },
+  "items/boots_of_the_hero": {
+    "speed": 2
+  },
+  "items/bramble_buckler": {
+    "armor": 2
+  },
+  "items/bramble_vest": {
+    "armor": 3
+  },
+  "items/brittlebark_armor": {
+    "health": 12
+  },
+  "items/brittlebark_buckler": {
+    "armor": 10
+  },
+  "items/broken_winebottle": {
+    "attack": 2
+  },
+  "items/chainmail_cloak": {
+    "health": 2
+  },
+  "items/champion_s_armor": {
+    "armor": 6
+  },
+  "items/cherry_blade": {
+    "attack": 3
+  },
+  "items/chest_of_lust": {
+    "armor": 8
+  },
+  "items/citrine_earring": {
+    "attack": 3
+  },
+  "items/clearspring_opal": {
+    "speed": 2
+  },
+  "items/combustible_lemon": {
+    "speed": 3
+  },
+  "items/deathcap_bow": {
+    "attack": 3
+  },
+  "items/double_plated_armor": {
+    "armor": 2,
+    "speed": -2
+  },
+  "items/elderwood_necklace": {
+    "armor": 1,
+    "attack": 1,
+    "speed": 1
+  },
+  "items/emerald_crown": {
+    "attack": -1,
+    "health": 8
+  },
+  "items/explosive_roast": {
+    "health": 5
+  },
+  "items/forge_gauntlet": {
+    "attack": 1
+  },
+  "items/ham_bat": {
+    "attack": 3,
+    "health": 5
+  },
+  "items/helmet_of_envy": {
+    "attack": 3
+  },
+  "items/holy_shield": {
+    "armor": 6,
+    "attack": -1,
+    "speed": -1
+  },
+  "items/holy_tome": {
+    "attack": -1
+  },
+  "items/honeydew_melon": {
+    "attack": 4,
+    "health": 5,
+    "speed": 5
+  },
+  "items/horned_helmet": {
+    "armor": 2
+  },
+  "items/horned_melon": {
+    "speed": 3
+  },
+  "items/iceblock_shield": {
+    "armor": 8
+  },
+  "items/knight_s_armor": {
+    "armor": 4
+  },
+  "items/leather_belt": {
+    "health": 3
+  },
+  "items/leather_glove": {
+    "health": 3,
+    "speed": 1
+  },
+  "items/leather_vest": {
+    "armor": 2,
+    "speed": 1
+  },
+  "items/lemontree_branch": {
+    "speed": 3
+  },
+  "items/liferoot_gauntlet": {
+    "health": 3
+  },
+  "items/lightning_bottle": {
+    "attack": 1,
+    "speed": 2
+  },
+  "items/lightning_elixir": {
+    "attack": 3,
+    "speed": 4
+  },
+  "items/lightspeed_elixir": {
+    "speed": 1
+  },
+  "items/lightspeed_potion": {
+    "speed": 1
+  },
+  "items/limestone_fruit": {
+    "attack": 2,
+    "speed": 4
+  },
+  "items/marble_mushroom": {
+    "armor": 6,
+    "attack": 4,
+    "speed": 3
+  },
+  "items/marbled_stonefish": {
+    "attack": 4,
+    "speed": 6
+  },
+  "items/melon_bomb": {
+    "attack": 5,
+    "health": -5
+  },
+  "items/melon_lemonade": {
+    "attack": 2
+  },
+  "items/melon_wine": {
+    "attack": 3
+  },
+  "items/melonvine_whip": {
+    "attack": 3,
+    "speed": 4
+  },
+  "items/mineral_water": {
+    "attack": 2,
+    "health": 5
+  },
+  "items/mist_armor": {
+    "health": 10,
+    "speed": 2
+  },
+  "items/mushroom_buckler": {
+    "armor": 3
+  },
+  "items/noxious_gas": {
+    "armor": 6
+  },
+  "items/poisonous_mushroom": {
+    "attack": 2
+  },
+  "items/purelake_armor": {
+    "health": 6,
+    "attack": -1,
+    "speed": 1
+  },
+  "items/purelake_chalice": {
+    "health": 5,
+    "speed": -1
+  },
+  "items/purelake_potion": {
+    "health": 5,
+    "speed": 1
+  },
+  "items/purelake_tome": {
+    "health": 5,
+    "speed": 1
+  },
+  "items/razor_breastplate": {
+    "health": 10,
+    "speed": 1
+  },
+  "items/razor_scales": {
+    "attack": 2,
+    "speed": 1
+  },
+  "items/redwood_cloak": {
+    "health": 5,
+    "speed": 4
+  },
+  "items/royal_helmet": {
+    "armor": 1
+  },
+  "items/ruby_crown": {
+    "attack": 1,
+    "speed": -1
+  },
+  "items/ruby_earring": {
+    "attack": 3
+  },
+  "items/ruby_gemstone": {
+    "attack": 3
+  },
+  "items/ruby_ring": {
+    "attack": 4
+  },
+  "items/rusted_plate": {
+    "health": -3,
+    "speed": 2
+  },
+  "items/rusty_ring": {
+    "attack": 3
+  },
+  "items/saffron_feather": {
+    "speed": 1
+  },
+  "items/saltcrusted_crown": {
+    "health": 8
+  },
+  "items/sanguine_imp": {
+    "attack": 4,
+    "health": 6
+  },
+  "items/sanguine_rose": {
+    "attack": 3,
+    "health": 4,
+    "speed": 3
+  },
+  "items/sapphire_crown": {
+    "speed": 3
+  },
+  "items/sapphire_earring": {
+    "speed": 3
+  },
+  "items/sapphire_gemstone": {
+    "speed": 3
+  },
+  "items/sapphire_ring": {
+    "speed": 4
+  },
+  "items/sheet_music": {
+    "speed": 3
+  },
+  "items/shield_of_the_hero": {
+    "speed": -3
+  },
+  "items/shield_talisman": {
+    "armor": -2,
+    "speed": 5
+  },
+  "items/slime_booster": {
+    "attack": 3,
+    "speed": 2
+  },
+  "items/slime_heart": {
+    "attack": -1,
+    "health": 1,
+    "speed": 1
+  },
+  "items/slime_potion": {
+    "speed": 3
+  },
+  "items/soul_ring": {
+    "health": 6
+  },
+  "items/sour_lemon": {
+    "attack": 4,
+    "speed": 4
+  },
+  "items/squire_s_armor": {
+    "armor": 3,
+    "attack": 2
+  },
+  "items/stillwater_pearl": {
+    "health": 6
+  },
+  "items/stormcloud_armor": {
+    "armor": 2,
+    "attack": -1,
+    "speed": 3
+  },
+  "items/stormcloud_tome": {
+    "attack": -1,
+    "speed": 2
+  },
+  "items/stormtide_anchor": {
+    "armor": 1,
+    "attack": 1
+  },
+  "items/studded_gauntlet": {
+    "armor": 5
+  },
+  "items/sugar_bomb": {
+    "attack": 4,
+    "speed": 2
+  },
+  "items/sunlight_crest": {
+    "health": 4,
+    "speed": 2
+  },
+  "items/swiftstrike_belt": {
+    "attack": 2,
+    "speed": 4
+  },
+  "items/swiftstrike_cloak": {
+    "attack": 2,
+    "speed": 4
+  },
+  "items/swiftstrike_gauntlet": {
+    "attack": 2,
+    "speed": 4
+  },
+  "items/sword_talisman": {
+    "attack": 3
+  },
+  "items/thorn_ring": {
+    "attack": 4
+  },
+  "items/thunder_cloud": {
+    "attack": 4,
+    "speed": 4
+  },
+  "items/toxic_algae": {
+    "attack": 2,
+    "speed": 2
+  },
+  "items/toxic_cherry": {
+    "attack": 2,
+    "speed": 4
+  },
+  "items/toxic_rose": {
+    "attack": 3,
+    "speed": 6
+  },
+  "items/trail_mix": {
+    "health": 5
+  },
+  "items/treefuel_armor": {
+    "health": 5,
+    "speed": 2
+  },
+  "items/twinfuse_knot": {
+    "health": 6,
+    "speed": 2
+  },
+  "items/twisted_root": {
+    "attack": -2,
+    "speed": 3
+  },
+  "items/underwater_watermelon": {
+    "attack": 4,
+    "health": 10,
+    "speed": -2
+  },
+  "items/vampire_s_tooth": {
+    "attack": 3,
+    "health": 2
+  },
+  "items/vampiric_stasis": {
+    "attack": 3,
+    "health": 1
+  },
+  "items/venomous_fang": {
+    "attack": 3
+  },
+  "items/viper_extract": {
+    "attack": 4
+  },
+  "items/weaver_armor": {
+    "health": -2,
+    "speed": 8
+  },
+  "items/weaver_shield": {
+    "health": 4,
+    "attack": -2,
+    "speed": 1
+  },
+  "items/wet_egg": {
+    "attack": 4,
+    "health": -2,
+    "speed": 3
+  },
+  "items/hexagon_platter": {
+    "attack": 3,
+    "health": 10,
+    "speed": -2
+  }
+}

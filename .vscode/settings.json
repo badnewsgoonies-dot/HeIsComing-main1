@@ -1,0 +1,5 @@
+{
+    "chat.agent.maxRequests": 1000,
+    "chatgpt.openOnStartup": true,
+    "liveServer.settings.port": 5501
+}

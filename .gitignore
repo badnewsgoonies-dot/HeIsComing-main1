@@ -1,0 +1,12 @@
+# Ignore large/accidental binaries
+ffmpeg.zip
+ffmpeg/**
+ffmpeg-*/**
+
+# Optional: uncomment to ignore all zip archives
+# *.zip
+
+# OS junk
+*.DS_Store
+Thumbs.db
+

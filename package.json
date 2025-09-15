@@ -1,0 +1,11 @@
+{
+  "name": "he-is-coming",
+  "version": "1.0.0",
+  "description": "He Is Coming battle simulator",
+  "scripts": {
+    "test": "node -e \"const sim=require('./heic_sim.js'); sim.simulate({hp:10,atk:0},{hp:10,atk:0});\""
+  },
+  "devDependencies": {
+    "eslint": "^9.35.0"
+  }
+}

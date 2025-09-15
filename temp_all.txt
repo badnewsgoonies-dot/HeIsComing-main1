@@ -1,0 +1,1046 @@
+<title>He Is Coming — Loadout Builder (v5)</title>
+<meta charset="utf-8">
+<style>
+html,body { margin:0; height:100%; background:#000; color:#f33; font-family: Inter, system-ui, Arial, sans-serif; }
+/* Slightly smaller font for a more compact UI */
+html { font-size:13px; }
+header { padding:10px 16px; border-bottom:2px solid #f33; }
+.frame {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr) 300px;
+  gap: 6px;
+  height: calc(100vh - 52px);
+  padding: 6px;
+  overflow: hidden;
+}
+.panel {
+  background:#000;
+  border:2px solid #f33;
+  border-radius:10px;
+  padding:6px;
+  display:flex;
+  flex-direction:column;
+  min-height:0;
+  overflow:auto; /* allow column to scroll instead of page */
+}
+.title { font-size:12px; color:#f33; margin:4px 2px 6px; }
+.oils { display:flex; flex-direction:column; gap:6px; }
+.oil { display:flex; align-items:center; gap:8px; border:2px solid #f33; border-radius:8px; padding:6px; cursor:pointer; }
+.oil img { width:22px; height:22px; image-rendering:pixelated; }
+.oil.active { background:#300; }
+.weapon-slot { border:2px dashed #f33; border-radius:10px; padding:8px; text-align:center; margin:8px 0; min-height:48px; display:flex; align-items:center; justify-content:center; }
+.grid12 {
+  display:grid;
+  grid-template-columns: repeat(2, 1fr);
+  grid-auto-rows: 60px;
+  gap:6px;
+  flex:1;
+}
+.slot { border:2px dashed #f33; border-radius:10px; display:flex; align-items:center; justify-content:center; color:#f33; }
+.slot.filled { border-style:solid; }
+.slot img { width:40px; height:40px; image-rendering:pixelated; }
+.weapon-slot img { width:48px; height:48px; image-rendering:pixelated; }
+.edge-tile { border:2px solid #f33; border-radius:10px; padding:6px; display:flex; flex-direction:column; gap:6px; margin-bottom:8px; }
+.edge-body { display:flex; align-items:center; gap:8px; }
+.edge-body img { width:20px; height:20px; image-rendering:pixelated; }
+.edge-tile select { flex:1; background:#000; color:#f33; border:1px solid #f33; border-radius:6px; padding:4px 6px; }
+.stats { display:flex; flex-direction: column; align-items:flex-start; gap:6px; padding-top:8px; border-top:2px solid #f33; }
+.stat {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #2f5d1a;
+  border: 2px solid #95d5b2;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 20px;
+  color: #fff;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(149,213,178,0.25);
+  margin-bottom: 6px;
+}
+.stat img {
+  width: 28px;
+  height: 28px;
+  image-rendering: pixelated;
+}
+  .center {
+    background: #111;
+    border: 2px solid #f33;
+    border-radius: 12px;
+    min-height: 0; /* allow children to shrink for scrolling */
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    max-width: none; /* fill available width to avoid narrow center */
+    margin: 0;
+    width: 100%;
+    box-sizing: border-box;
+    overflow: hidden; /* inner grid scrolls */
+  }
+  .toolbar { display:flex; gap:8px; align-items:center; padding:8px; border-bottom:2px solid #f33; flex-wrap:wrap; }
+  input[type='search'], select, button { background:#1b1216; color:#f33; border:1px solid #f33; border-radius:8px; padding:6px 10px; }
+  .grid {
+    flex: 1 1 auto;
+    min-height: 0; /* required for child scroll in flex */
+    overflow: auto; /* make the compendium the scrollable area */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 10px;
+    padding: 14px;
+    justify-items: stretch;
+    align-content: start;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  /* Mini card styling for filled slots and weapon */
+  .miniCard {
+    display:flex; align-items:center; gap:8px;
+    border:2px solid #f33; border-radius:12px; padding:6px 8px;
+    background:#111; color:#fff; box-shadow: 0 2px 8px rgba(255,51,51,0.15);
+  }
+  .miniCard img { width:28px; height:28px; image-rendering:pixelated; }
+  .slot.filled { border-style:solid; }
+  .slot.filled .miniCard .name { font-size:12px; color:#faa; }
+
+  .card {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    border: 2px solid #f33;
+    border-radius: 16px;
+    padding: 14px;
+    background: #111;
+    color: #fff;
+    font-size: 12px;
+    max-width: 420px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 12px rgba(255, 51, 51, 0.2);
+  }
+
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(255, 51, 51, 0.3);
+    border-color: #f55;
+    background: #1a1a1a;
+  }
+
+  .card[data-cat="Jewelry"] { border-color: #ffd166; box-shadow: 0 4px 12px rgba(255, 209, 102, 0.2); }
+  .card[data-cat="Jewelry"]:hover { border-color: #ffe0a3; box-shadow: 0 6px 16px rgba(255, 209, 102, 0.3); }
+
+  .card[data-cat="Tome"] { border-color: #73d2de; box-shadow: 0 4px 12px rgba(115, 210, 222, 0.2); }
+  .card[data-cat="Tome"]:hover { border-color: #a1e3eb; box-shadow: 0 6px 16px rgba(115, 210, 222, 0.3); }
+
+  .card[data-cat="Food"] { border-color: #95d5b2; box-shadow: 0 4px 12px rgba(149, 213, 178, 0.2); }
+  .card[data-cat="Food"]:hover { border-color: #b7e4cc; box-shadow: 0 6px 16px rgba(149, 213, 178, 0.3); }
+  .card[data-cat="Jewelry"]{ border-color:#ffd166; }
+  .card[data-cat="Tome"]{ border-color:#73d2de; }
+  .card[data-cat="Food"]{ border-color:#95d5b2; }
+  /* Keyboard focus ring for cards */
+  .card:focus-visible { outline: 2px solid #f55; outline-offset: 2px; }
+  /* Clamp effect text to two lines inside cards */
+  .card .effect {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+  /* Optional: visible focus ring on slots for future keyboard nav */
+  .slot:focus-visible { outline: 2px solid #f55; outline-offset: 3px; }
+  /* Selected slot highlight */
+.slot.active { box-shadow: 0 0 0 3px #f55 inset; background:#120; }
+  /* Card quick actions (Add P / Add O) */
+  .card__actions { display:none; gap:6px; margin-left:auto; }
+  .card:hover .card__actions, .card:focus .card__actions, .card:focus-within .card__actions { display:flex; }
+  .card__btn { background:#1b1216; color:#f33; border:1px solid #f33; border-radius:8px; padding:4px 8px; cursor:pointer; font-size:12px; }
+  .selIndicator { font-size: 12px; color:#faa; margin:4px 2px; }
+.card .iconWrap { position:relative; }
+.card .iconWrap img { width:48px; height:48px; image-rendering:pixelated; }
+.card .badge { position:absolute; top:-6px; right:-6px; background:#210; border:1px solid #f33; border-radius:6px; padding:2px 4px; font-size:12px; }
+.card .nameUnder { text-align:center; font-size:12px; }
+
+/* Floating simulation panel styling */
+/* Simulation panel now in center column, below compendium */
+#simPanel {
+  width:480px;
+  margin:24px auto 0 auto;
+  background:#000;
+  border:2px solid #f33;
+  border-radius:16px;
+  padding:18px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  z-index:10;
+  position:static;
+}
+#simControls { display:flex; gap:12px; flex-wrap:wrap; align-items:center; }
+#simLog {
+  flex:1;
+  min-height:180px;
+  max-height:320px;
+  overflow:auto;
+  background:#111;
+  border:2px solid #f33;
+  border-radius:12px;
+  padding:14px;
+  font-size:16px;
+  font-family:monospace;
+  color:#f66;
+  white-space:pre-wrap;
+}
+.meta .name { font-weight:700; }
+.meta .slug { font-size:12px; color:#f66; }
+.meta .effect { font-size:12px; margin-top:6px; color:#faa; }
+.meta .stats { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+.pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #2f5d1a;
+  border: 2px solid #95d5b2;
+  border-radius: 999px;
+  padding: 8px 18px;
+  font-size: 18px;
+  color: #fff;
+  font-weight: bold;
+  box-shadow: 0 2px 8px rgba(149,213,178,0.25);
+}
+.pill img {
+  width: 22px;
+  height: 22px;
+  image-rendering: pixelated;
+}
+.drag-over { outline:2px dashed #f33; }
+
+#detailModal { position:fixed; inset:0; background:rgba(0,0,0,0.8); display:none; align-items:center; justify-content:center; z-index:1000; }
+#detailBox { background:#111; border:2px solid #f33; border-radius:12px; padding:16px; color:#f66; max-width:400px; }
+#detailBox h2 { margin-top:0; }
+#detailClose { background:#333; color:#f33; border:1px solid #f33; border-radius:6px; padding:2px 6px; float:right; cursor:pointer; }
+#detailStats { display:flex; gap:6px; flex-wrap:wrap; margin-top:8px; }
+</style>
+</head>
+<body>
+<header><h1>He Is Coming — Loadout Builder (v5)</h1></header>
+<div class="frame">
+  <!-- LEFT / PLAYER -->
+  <section class="panel" id="panelP">
+    <div class="title">Oils</div>
+    <div class="oils" id="oilsP">
+      <div class="oil" data-kind="attack"><img src="assets/attack.png"><span>Attack Oil</span></div>
+      <div class="oil" data-kind="armor"><img src="assets/armor.png"><span>Armor Oil</span></div>
+      <div class="oil" data-kind="speed"><img src="assets/speed.png"><span>Speed Oil</span></div>
+    </div>
+    <div class="weapon-slot" id="weaponP">Drop a Weapon</div>
+    <div class="edge-tile">
+      <div class="edge-body">
+        <img id="edgePIcon" src="assets/placeholder.png" alt="">
+        <select id="edgeP"><option value="">— Select Edge —</option></select>
+      </div>
+      <div id="edgePEffect" class="meta effect"></div>
+    </div>
+    <div class="selIndicator" id="selPI">Selected: None</div>
+    <div class="grid12" id="gridP"></div>
+    <div class="stats">
+      <div class="stat"><img src="assets/health.png" alt="health"><span id="pH">10</span></div>
+      <div class="stat"><img src="assets/attack.png" alt="atk"><span id="pA">0</span></div>
+      <div class="stat"><img src="assets/armor.png" alt="arm"><span id="pR">0</span></div>
+      <div class="stat"><img src="assets/speed.png" alt="spd"><span id="pS">0</span></div>
+    </div>
+  </section>
+
+  <!-- CENTER COLUMN -->
+  <div style="grid-column: 2; display: flex; flex-direction: column; height: 100%; min-height:0;">
+    <div class="tabs" style="display:flex; gap:2px; margin-bottom:8px;">
+      <button id="tabCompendium" class="tabBtn" style="background:#111;color:#f33;border:2px solid #f33;border-radius:8px 8px 0 0;padding:8px 24px;cursor:pointer;font-size:16px;">Compendium</button>
+      <button id="tabSimulation" class="tabBtn" style="background:#111;color:#0f3;border:2px solid #0f3;border-radius:8px 8px 0 0;padding:8px 24px;cursor:pointer;font-size:16px;">Simulation</button>
+    </div>
+    <section class="center" id="compendiumTab" style="flex:1; display:flex; flex-direction:column; min-height:0;">
+      <div class="toolbar">
+        <input id="q" type="search" placeholder="Search name/effect/tag…">
+        <select id="bucket">
+          <option value="All">All</option><option value="items">Items</option><option value="weapons">Weapons</option><option value="upgrades">Upgrades</option>
+        </select>
+        <select id="cat">
+          <option value="All">All</option>
+          <option value="Jewelry">Jewelry</option><option value="Tome">Tome</option><option value="Food">Food</option>
+        </select>
+        <button id="randBuildBtn" type="button" title="Fill your slots with random items and a random weapon from the compendium" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">🎲 Random Build</button>
+        <button id="randEnemyBtn" type="button" title="Randomize the opponent's loadout" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">🎲 Random Enemy</button>
+        <button id="showSimBtn" type="button" style="background:#0f3;color:#000;border:1px solid #0f3;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;margin-left:16px;">Show Simulation</button>
+        <span id="count" style="margin-left:auto;">Shown: 0</span>
+      </div>
+      <div id="grid" class="grid" style="flex:1;"></div>
+    </section>
+    <section class="center" id="simulationTab" style="flex:1; display:none; flex-direction:column; align-items:center; justify-content:center; min-height:0;">
+      <div id="simPanel" style="width:640px;max-width:100%;margin:24px auto;background:#000;border:2px solid #0f3;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:18px;box-shadow:0 0 32px #000;">
+        <div id="simControls" style="display:flex;gap:18px;flex-wrap:wrap;align-items:center;">
+          <button id="btnSimulate" type="button" title="Run a simulation between the two loadouts" style="background:#0f3;color:#000;border:1px solid #0f3;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:20px;">▶ Simulate</button>
+          <button id="btnClearLog" type="button" title="Clear the simulation log" style="background:#333;color:#0f3;border:1px solid #0f3;border-radius:8px;padding:8px 16px;cursor:pointer;font-size:20px;">Clear Log</button>
+        </div>
+        <div id="simLog" style="flex:1;min-height:240px;max-height:60vh;overflow:auto;background:#111;border:2px solid #0f3;border-radius:12px;padding:18px;font-size:18px;font-family:monospace;color:#0f3;"></div>
+      </div>
+    </section>
+  </div>
+
+  <!-- RIGHT / OPPONENT -->
+  <section class="panel" id="panelO">
+    <div class="title">Oils</div>
+    <div class="oils" id="oilsO">
+      <div class="oil" data-kind="attack"><img src="assets/attack.png"><span>Attack Oil</span></div>
+      <div class="oil" data-kind="armor"><img src="assets/armor.png"><span>Armor Oil</span></div>
+      <div class="oil" data-kind="speed"><img src="assets/speed.png"><span>Speed Oil</span></div>
+    </div>
+    <div class="weapon-slot" id="weaponO">Drop a Weapon</div>
+    <div class="edge-tile">
+      <div class="edge-body">
+        <img id="edgeOIcon" src="assets/placeholder.png" alt="">
+        <select id="edgeO"><option value="">— Select Edge —</option></select>
+      </div>
+      <div id="edgeOEffect" class="meta effect"></div>
+    </div>
+    <div class="selIndicator" id="selOI">Selected: None</div>
+    <div class="grid12" id="gridO"></div>
+    <div class="stats">
+      <div class="stat"><img src="assets/health.png" alt="health"><span id="oH">10</span></div>
+      <div class="stat"><img src="assets/attack.png" alt="atk"><span id="oA">0</span></div>
+      <div class="stat"><img src="assets/armor.png" alt="arm"><span id="oR">0</span></div>
+      <div class="stat"><img src="assets/speed.png" alt="spd"><span id="oS">0</span></div>
+    </div>
+  </section>
+</div>
+
+<!-- Simulation panel removed from bottom of page -->
+
+<div id="detailModal">
+  <div id="detailBox">
+    <button id="detailClose">Close</button>
+    <h2 id="detailName"></h2>
+    <div id="detailEffect"></div>
+    <div id="detailStats"></div>
+  </div>
+</div>
+
+<!-- Note: details are loaded from details.json via fetch.  -->
+<script src="heic_sim.js"></script>
+<script src="heic_effects.js"></script>
+
+<script>
+/* Main builder logic using embedded details data */
+let RAW_DATA = {};
+let DATA_ARR = [];
+async function loadData() {
+  try {
+    const res = await fetch('details.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error('Failed to load details.json: ' + res.status);
+    RAW_DATA = await res.json();
+    try { window.HEIC_DETAILS = RAW_DATA; } catch(_) {}
+    // Attempt to load optional stats_overrides.json and merge it into RAW_DATA.
+    try {
+      const resO = await fetch('stats_overrides.json', { cache: 'no-store' });
+      if (resO.ok) {
+        const overrides = await resO.json();
+        for (const [k, statObj] of Object.entries(overrides || {})) {
+          if (RAW_DATA[k]) {
+            const baseStats = RAW_DATA[k].stats || {};
+            RAW_DATA[k].stats = Object.assign({}, baseStats, statObj);
+          }
+        }
+      }
+    } catch(oerr) {
+      // Ignore missing overrides file; it's optional.
+    }
+    DATA_ARR = Object.entries(RAW_DATA).map(([key,val]) => { val.key = key; return val; });
+    // Build a set of keys that support Gold/Diamond tiers either because:
+    // - effect text mentions Gold/Diamond, or
+    // - sibling variant slugs *_gold or *_diamond exist.
+    window.TIERABLE = new Set();
+    const keys = Object.keys(RAW_DATA);
+    const hasVariant = (slug) => keys.some(k => /^(items|weapons)\//.test(k) && (k.endsWith(slug+"_gold") || k.endsWith(slug+"_diamond")));
+    for (const [k, v] of Object.entries(RAW_DATA)){
+      if (!v || typeof v !== 'object') continue;
+      const eff = (v.effect||'');
+      const m = /^(items|weapons)\/(.+)$/.exec(k);
+      const baseSlug = m ? m[2] : '';
+      if (/gold|diamond/i.test(eff) || hasVariant(baseSlug)) {
+        window.TIERABLE.add(k);
+      }
+    }
+    // Populate edge selects once data is ready
+    populateEdges();
+    // Build empty item grids for both sides
+    initSlots();
+    // Render the compendium grid
+    renderGrid();
+    // Compute initial totals for player and opponent (empty builds)
+    updateTotals('P');
+    updateTotals('O');
+  } catch(err) {
+    console.error('Error loading details.json', err);
+    const msg = document.createElement('div');
+    msg.style.color = '#f66';
+    msg.style.padding = '8px';
+    msg.textContent = 'Failed to load details.json. Please serve files via a local server (e.g., python -m http.server) instead of opening via file://';
+    document.body.insertBefore(msg, document.body.firstChild);
+  }
+}
+loadData();
+// Icons for stats
+const ICONS = { attack:'assets/attack.png', health:'assets/health.png', armor:'assets/armor.png', speed:'assets/speed.png' };
+
+const $ = sel => document.querySelector(sel);
+const grid = $('#grid');
+const countSpan = $('#count');
+const searchIn = $('#q');
+const bucketSel = $('#bucket');
+const catSel = $('#cat');
+const detailModal = $('#detailModal');
+const detailName = $('#detailName');
+const detailEffect = $('#detailEffect');
+const detailStats = $('#detailStats');
+$('#detailClose').addEventListener('click', () => detailModal.style.display='none');
+detailModal.addEventListener('click', e => { if (e.target === detailModal) detailModal.style.display='none'; });
+
+// Number of item slots available per side.  Displayed as empty dashed boxes until filled.
+const SLOT_COUNT = 12;
+
+// Selection target for slot-aware actions
+let activeTarget = { side: null, idx: -1 };
+
+// Player and opponent state
+const sides = {
+  P: { hpBase:10, atkBase:0, armBase:0, spdBase:0, weapon:null, items:new Array(SLOT_COUNT).fill(null), edge:null, oils:new Set() },
+  O: { hpBase:10, atkBase:0, armBase:0, spdBase:0, weapon:null, items:new Array(SLOT_COUNT).fill(null), edge:null, oils:new Set() }
+};
+
+function updateTotals(sideKey) {
+  const side = sides[sideKey];
+  let hp = side.hpBase, atk = side.atkBase, arm = side.armBase, spd = side.spdBase;
+  const addStats = obj => {
+    if (!obj) return;
+    const s = obj.stats || {};
+    hp += (s.health || 0);
+    atk += (s.attack || 0);
+    arm += (s.armor  || 0);
+    spd += (s.speed  || 0);
+  };
+  addStats(side.weapon);
+  side.items.forEach(addStats);
+  if (side.weapon) {
+    if (side.oils.has('attack')) atk += 1;
+    if (side.oils.has('armor')) arm += 1;
+    if (side.oils.has('speed')) spd += 1;
+  }
+  const prefix = sideKey === 'P' ? 'p' : 'o';
+  $('#'+prefix+'H').textContent = hp;
+  $('#'+prefix+'A').textContent = atk;
+  $('#'+prefix+'R').textContent = arm;
+  $('#'+prefix+'S').textContent = spd;
+}
+
+// Initialise the item slot grids for both player and opponent.  This creates SLOT_COUNT
+// placeholder cells with a dashed border.  When items are added later via drag-and-drop
+// or the random build function, these placeholders are filled in (the border becomes
+// solid and the item name is written in the cell).  Without this, the grids would
+// appear empty on page load, which confused some users.
+function initSlots() {
+  ['P','O'].forEach(sk => {
+    const gridEl = sk === 'P' ? $('#gridP') : $('#gridO');
+    gridEl.innerHTML = '';
+    for (let i = 0; i < SLOT_COUNT; i++) {
+      const cell = document.createElement('div');
+      cell.className = 'slot';
+      cell.dataset.idx = String(i);
+      
+      cell.addEventListener('click', () => {
+        const idx = Number(cell.dataset.idx);
+        const side = sides[sk];
+        selectSlot(sk, idx);
+        if (cell.classList.contains('filled')) {
+          side.items[idx] = null;
+          cell.classList.remove('filled');
+          cell.innerHTML = '';
+          updateTotals(sk);
+        }
+      });
+      gridEl.appendChild(cell);
+    }
+  });
+}
+
+// Reset the slots for a single side.  Clears the grid and adds back SLOT_COUNT empty cells.
+function resetSlots(sideKey) {
+  const gridEl = sideKey === 'P' ? $('#gridP') : $('#gridO');
+  gridEl.innerHTML = '';
+  for (let i = 0; i < SLOT_COUNT; i++) {
+    const cell = document.createElement('div');
+    cell.className = 'slot';
+    cell.dataset.idx = String(i);
+    
+    cell.addEventListener('click', () => {
+      const idx = Number(cell.dataset.idx);
+      const side = sides[sideKey];
+      selectSlot(sideKey, idx);
+      if (cell.classList.contains('filled')) {
+        side.items[idx] = null;
+        cell.classList.remove('filled');
+        cell.innerHTML = '';
+        updateTotals(sideKey);
+      }
+    });
+    gridEl.appendChild(cell);
+  }
+}
+
+// Highlight selection and track active slot
+function selectSlot(sideKey, idx){
+  const container = sideKey === 'P' ? $('#gridP') : $('#gridO');
+  if (container) {
+    container.querySelectorAll('.slot.active').forEach(el => el.classList.remove('active'));
+    const el = container.querySelector(`.slot[data-idx="${idx}"]`);
+    if (el) { el.classList.add('active'); el.focus(); }
+  }
+  activeTarget = { side: sideKey, idx };
+  updateSelIndicators();
+}
+
+// Mini card HTML
+function mini(it){
+  return `<div class="miniCard"><img src="${it.bucket}/${it.slug}/icon.png" alt="${it.name}"><span class="name">${it.name}</span></div>`;
+}
+
+function firstEmptyIndex(side){
+  const i = side.items.findIndex(x => !x);
+  return i === -1 ? 0 : i;
+}
+
+// Quick add helpers (used by keyboard nav and UI hooks)
+function quickAdd(sideKey, item, tier){
+  if (!item) return;
+  const side = sides[sideKey];
+  if (item.bucket === 'weapons'){
+    side.weapon = item;
+    const wSlot = sideKey === 'P' ? $('#weaponP') : $('#weaponO');
+    if (wSlot) wSlot.innerHTML = mini(item);
+    updateTotals(sideKey);
+    return;
+  }
+  if (item.bucket === 'items' || item.bucket === 'upgrades'){
+    const idx = firstEmptyIndex(side);
+    const annotated = Object.assign({}, item, { tier: tier || 'base' });
+    side.items[idx] = annotated;
+    const gridEl = sideKey === 'P' ? $('#gridP') : $('#gridO');
+    const el = gridEl?.querySelector(`.slot[data-idx="${idx}"]`);
+    if (el){ el.innerHTML = mini(item); el.classList.add('filled'); }
+    selectSlot(sideKey, idx);
+    updateTotals(sideKey);
+  }
+}
+
+function quickAddToActive(item){
+  if (activeTarget.side){
+    quickAdd(activeTarget.side, item);
+  } else {
+    quickAdd('P', item);
+  }
+}
+
+// Update selected slot labels
+function updateSelIndicators(){
+  const pi = document.getElementById('selPI');
+  const oi = document.getElementById('selOI');
+  if (pi) pi.textContent = (activeTarget.side === 'P' && activeTarget.idx >= 0) ? `Selected: P slot ${activeTarget.idx+1}` : 'Selected: None';
+  if (oi) oi.textContent = (activeTarget.side === 'O' && activeTarget.idx >= 0) ? `Selected: O slot ${activeTarget.idx+1}` : 'Selected: None';
+}
+
+// Clear the currently active slot
+function clearActiveSlot(){
+  if (!activeTarget.side || activeTarget.idx < 0) return;
+  const sideKey = activeTarget.side;
+  const idx = activeTarget.idx;
+  const side = sides[sideKey];
+  if (!side) return;
+  side.items[idx] = null;
+  const gridEl = sideKey === 'P' ? $('#gridP') : $('#gridO');
+  const cell = gridEl?.querySelector(`.slot[data-idx="${idx}"]`);
+  if (cell){ cell.classList.remove('filled'); cell.innerHTML = ''; }
+  updateTotals(sideKey);
+}
+
+// (Delete/Backspace clear shortcut removed as requested)
+
+// (Keyboard shortcuts removed as requested)
+
+function showDetail(entry) {
+  detailName.textContent = entry.name;
+  detailEffect.textContent = entry.effect || '';
+  detailStats.innerHTML = '';
+  ['attack','health','armor','speed'].forEach(st => {
+    const val = entry.stats && typeof entry.stats[st] === 'number' ? entry.stats[st] : 0;
+    const pill = document.createElement('span'); pill.className='pill';
+    const pImg = document.createElement('img'); pImg.src = ICONS[st];
+    const pTxt = document.createElement('span'); pTxt.textContent = `${st[0].toUpperCase()+st.slice(1)}: ${val}`;
+    pill.append(pImg, pTxt);
+    detailStats.appendChild(pill);
+  });
+  detailModal.style.display = 'flex';
+}
+
+function renderGrid() {
+  const term = searchIn.value.trim().toLowerCase();
+  const bucketVal = bucketSel.value;
+  const catVal = catSel.value;
+  let shown = 0;
+  grid.innerHTML = '';
+  DATA_ARR.forEach(entry => {
+    if (bucketVal !== 'All' && entry.bucket !== bucketVal) return;
+    if (catVal !== 'All') {
+      if (!entry.tags || !entry.tags.includes(catVal)) return;
+    }
+    const hay = `${entry.name} ${entry.effect || ''} ${entry.key}`.toLowerCase();
+    if (term && !hay.includes(term)) return;
+    shown++;
+    const card = document.createElement('div'); card.className='card';
+    card.draggable = true; card.dataset.key = entry.key;
+    card.dataset.cat = (entry.tags||[]).find(t=>t==='Jewelry'||t==='Tome'||t==='Food') || '';
+
+    // Top row: icon, name/slug, tier selector, quick actions
+    const topRow = document.createElement('div'); topRow.style.display='flex'; topRow.style.alignItems='center'; topRow.style.gap='8px';
+    // Icon
+    const icon = document.createElement('img');
+    icon.src = `${entry.bucket}/${entry.slug}/icon.png`;
+    icon.alt = entry.name;
+    icon.style.width = '48px';
+    icon.style.height = '48px';
+    icon.style.imageRendering = 'pixelated';
+    icon.style.marginRight = '12px';
+    // Name and slug
+    const nameSlug = document.createElement('div');
+    nameSlug.innerHTML = `<div style="font-weight:700;font-size:20px;color:#f33;">${entry.name}</div><div style="font-size:15px;color:#faa;">${entry.key}</div>`;
+    topRow.appendChild(icon);
+    topRow.appendChild(nameSlug);
+    // Tier selector (only shown if item supports tiers)
+    const tierSel = document.createElement('select'); tierSel.innerHTML = '<option value="base">Base</option><option value="gold">Gold</option><option value="diamond">Diamond</option>';
+    tierSel.style.background = '#1b1216'; tierSel.style.color = '#f33'; tierSel.style.border = '1px solid #f33'; tierSel.style.borderRadius = '8px'; tierSel.style.padding = '2px 6px'; tierSel.style.fontSize = '12px';
+    tierSel.addEventListener('click', ev => ev.stopPropagation());
+    card.dataset.tier = 'base';
+    tierSel.addEventListener('change', () => { card.dataset.tier = tierSel.value; });
+    const supportsTier = (window.TIERABLE && window.TIERABLE.has(entry.key));
+    if (!supportsTier) tierSel.style.display = 'none';
+    // Actions container
+    const actions = document.createElement('div'); actions.className = 'card__actions'; actions.style.marginLeft = 'auto';
+    const btnP = document.createElement('button'); btnP.className = 'card__btn'; btnP.textContent = 'Add P';
+    const btnO = document.createElement('button'); btnO.className = 'card__btn'; btnO.textContent = 'Add O';
+    btnP.addEventListener('click', (ev) => { ev.stopPropagation(); quickAdd('P', entry, card.dataset.tier || 'base'); });
+    btnO.addEventListener('click', (ev) => { ev.stopPropagation(); quickAdd('O', entry, card.dataset.tier || 'base'); });
+    actions.append(tierSel, btnP, btnO);
+    topRow.appendChild(actions);
+
+    // Effect text and divider
+    const effectDiv = document.createElement('div');
+    effectDiv.className = 'effect';
+    effectDiv.style.marginTop = '8px';
+    effectDiv.style.marginBottom = '8px';
+    effectDiv.style.color = '#fff';
+    effectDiv.style.fontSize = '12px';
+    effectDiv.textContent = entry.effect || '';
+    const divider = document.createElement('div');
+    divider.style.height = '3px';
+    divider.style.background = '#f33';
+    divider.style.margin = '8px 0 8px 0';
+    divider.style.borderRadius = '2px';
+
+    // Stat pills in two rows
+    const statRow1 = document.createElement('div'); statRow1.style.display='flex'; statRow1.style.gap='16px'; statRow1.style.marginBottom='8px';
+    const statRow2 = document.createElement('div'); statRow2.style.display='flex'; statRow2.style.gap='16px';
+    const statOrder = [
+      { key:'attack', label:'Attack', color:'#f33', icon:'assets/attack.png' },
+      { key:'armor', label:'Armor', color:'#3af', icon:'assets/armor.png' },
+      { key:'health', label:'Health', color:'#95d5b2', icon:'assets/health.png' },
+      { key:'speed', label:'Speed', color:'#ffd166', icon:'assets/speed.png' }
+    ];
+    statOrder.forEach((st, idx) => {
+      const val = entry.stats && typeof entry.stats[st.key] === 'number' ? entry.stats[st.key] : 0;
+      const pill = document.createElement('div');
+      pill.style.display = 'flex';
+      pill.style.alignItems = 'center';
+      pill.style.gap = '8px';
+      pill.style.background = '#210';
+      pill.style.border = '2px solid #f33';
+      pill.style.borderRadius = '16px';
+      pill.style.padding = '8px 18px';
+      pill.style.fontSize = '18px';
+      pill.style.color = st.color;
+      const pImg = document.createElement('img'); pImg.src = st.icon; pImg.style.width='24px'; pImg.style.height='24px'; pImg.style.imageRendering='pixelated';
+      const pTxt = document.createElement('span'); pTxt.textContent = `${st.label}: ${val}`;
+      pill.appendChild(pImg);
+      pill.appendChild(pTxt);
+      if (idx < 2) statRow1.appendChild(pill); else statRow2.appendChild(pill);
+    });
+
+    // Card layout
+    card.style.background = '#000';
+    card.style.border = '2px solid #f33';
+    card.style.borderRadius = '16px';
+    card.style.padding = '14px';
+    card.style.margin = '4px';
+    card.style.color = '#fff';
+    card.style.display = 'flex';
+    card.style.flexDirection = 'column';
+    card.style.gap = '6px';
+    card.style.width = '100%';
+    card.style.boxSizing = 'border-box';
+
+    card.appendChild(topRow);
+    card.appendChild(effectDiv);
+    card.appendChild(divider);
+    card.appendChild(statRow1);
+    card.appendChild(statRow2);
+
+    card.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', entry.key);
+      try { e.dataTransfer.setData('application/json', JSON.stringify({ key: entry.key, tier: card.dataset.tier || 'base' })); } catch(_){ }
+    });
+    card.addEventListener('click', () => showDetail(entry));
+    grid.appendChild(card);
+  });
+  countSpan.textContent = `Shown: ${shown}`;
+}
+
+// Filter listeners
+[searchIn, bucketSel, catSel].forEach(el => el.addEventListener('input', renderGrid));
+
+// Drag and drop helpers
+function setupDrop(zoneSel, sideKey, type) {
+  const zone = $(zoneSel);
+  zone.addEventListener('dragover', e=>{ e.preventDefault(); zone.classList.add('drag-over'); });
+  zone.addEventListener('dragleave', ()=> zone.classList.remove('drag-over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault(); zone.classList.remove('drag-over');
+    const key = e.dataTransfer.getData('text/plain');
+    let tier = 'base';
+    try { const j = e.dataTransfer.getData('application/json'); if (j) { const obj = JSON.parse(j); if (obj && obj.tier) tier = obj.tier; } } catch(_){}
+    const item = RAW_DATA[key];
+    if (!item) return;
+    const side = sides[sideKey];
+  if (type === 'weapon') {
+      // Only accept weapons in the weapon slot.  Replace any existing weapon.
+      if (item.bucket !== 'weapons') return;
+      side.weapon = item;
+
+      zone.innerHTML = `<div class="miniCard"><img src="${item.bucket}/${item.slug}/icon.png" alt="${item.name}"><span class="name">${item.name}</span></div>`;
+
+    } else if (type === 'items') {
+      // Only accept items in the item grid.  Do not allow duplicates and do not exceed SLOT_COUNT.
+      if (item.bucket !== 'items') return;
+      // Determine the intended slot
+      let slotEl = e.target.closest('.slot');
+      let idx = -1;
+      if (slotEl && zone.contains(slotEl)) {
+        idx = Number(slotEl.dataset.idx);
+      } else {
+        idx = side.items.findIndex(x => !x);
+        if (idx === -1) idx = 0; // replace first if full
+        slotEl = zone.querySelector(`.slot[data-idx="${idx}"]`);
+      }
+      const annotated = Object.assign({}, item, { tier });
+      side.items[idx] = annotated;
+      if (slotEl) {
+        slotEl.innerHTML = `<div class=\"miniCard\"><img src=\"${item.bucket}/${item.slug}/icon.png\" alt=\"${item.name}\"><span class=\"name\">${item.name}</span></div>`;
+        slotEl.classList.add('filled');
+        selectSlot(sideKey, idx);
+      }
+    }
+    updateTotals(sideKey);
+  });
+}
+setupDrop('#weaponP','P','weapon');
+setupDrop('#gridP','P','items');
+setupDrop('#weaponO','O','weapon');
+setupDrop('#gridO','O','items');
+
+// Oils toggles
+function setupOils(sel, sideKey) {
+  $(sel).querySelectorAll('.oil').forEach(el => {
+    el.addEventListener('click', () => {
+      const kind = el.dataset.kind;
+      const side = sides[sideKey];
+      if (side.oils.has(kind)) {
+        side.oils.delete(kind);
+        el.classList.remove('active');
+      } else {
+        side.oils.add(kind);
+        el.classList.add('active');
+      }
+      updateTotals(sideKey);
+    });
+  });
+}
+setupOils('#oilsP','P');
+setupOils('#oilsO','O');
+
+// Populate edge selects after data loaded
+function populateEdges() {
+  const edges = DATA_ARR.filter(e => e.bucket === 'upgrades' && /edge/i.test(e.slug) && !(/_used$/i.test(e.slug) || /_darkened$/i.test(e.slug)));
+  const selects = [$('#edgeP'), $('#edgeO')];
+  const effects  = [$('#edgePEffect'), $('#edgeOEffect')];
+  const icons    = [$('#edgePIcon'), $('#edgeOIcon')];
+  selects.forEach((sel, idx) => {
+    // Clear existing options except the first placeholder
+    while (sel.options.length > 1) sel.remove(1);
+    edges.forEach(e => {
+      const opt = document.createElement('option');
+      opt.value = e.slug;
+      opt.textContent = e.name;
+      sel.appendChild(opt);
+    });
+    // When the user changes the selected edge, update the underlying state, effect text
+    // and the displayed icon.  If no edge is selected, fall back to the placeholder icon.
+    sel.addEventListener('change', () => {
+      const pick = edges.find(e => e.slug === sel.value);
+      const sideKey = idx === 0 ? 'P' : 'O';
+      sides[sideKey].edge = pick || null;
+      effects[idx].textContent = pick ? (pick.effect || '') : '';
+      const iconEl = icons[idx];
+      if (pick) {
+        iconEl.src = `${pick.bucket}/${pick.slug}/icon.png`;
+      } else {
+        iconEl.src = 'assets/placeholder.png';
+      }
+    });
+  });
+}
+// populateEdges is invoked from loadData() once DATA_ARR is ready
+
+// Randomize a side's loadout
+function randomizeSide(targetSide){
+  const side = sides[targetSide];
+  // Reset state: clear weapon, items, oils and edge selection
+  side.weapon = null;
+  side.items = new Array(SLOT_COUNT).fill(null);
+  side.oils.clear();
+  side.edge = null;
+  // Reset DOM: weapon slot text, clear oils active class, reset edge select and effect, and rebuild empty item slots
+  const wSlot = targetSide === 'P' ? $('#weaponP') : $('#weaponO');
+  wSlot.textContent = 'Drop a Weapon';
+  const oilsEl = targetSide === 'P' ? $('#oilsP') : $('#oilsO');
+  oilsEl.querySelectorAll('.oil.active').forEach(el => el.classList.remove('active'));
+  if (targetSide === 'P') {
+    $('#edgeP').value = '';
+    $('#edgePEffect').textContent = '';
+    $('#edgePIcon').src = 'assets/placeholder.png';
+  } else {
+    $('#edgeO').value = '';
+    $('#edgeOEffect').textContent = '';
+    $('#edgeOIcon').src = 'assets/placeholder.png';
+  }
+  resetSlots(targetSide);
+  const gridEl = targetSide === 'P' ? $('#gridP') : $('#gridO');
+  const weapons = DATA_ARR.filter(e => e.bucket === 'weapons');
+  const itemsList = DATA_ARR.filter(e => e.bucket === 'items');
+  if (weapons.length) {
+    const w = weapons[Math.floor(Math.random()*weapons.length)];
+    side.weapon = w;
+
+    wSlot.innerHTML = `<div class="miniCard"><img src="${w.bucket}/${w.slug}/icon.png" alt="${w.name}"><span class="name">${w.name}</span></div>`;
+
+  }
+  const copy = itemsList.slice();
+  const chosen = [];
+  for (let i = 0; i < SLOT_COUNT && copy.length; i++) {
+    const idxPick = Math.floor(Math.random() * copy.length);
+    const pick = copy.splice(idxPick, 1)[0];
+    chosen.push(pick);
+  }
+  const cells = gridEl.querySelectorAll('.slot');
+  chosen.forEach((it, idxItem) => {
+    side.items[idxItem] = it;
+    const cell = cells[idxItem];
+    cell.innerHTML = `<div class=\"miniCard\"><img src=\"${it.bucket}/${it.slug}/icon.png\" alt=\"${it.name}\"><span class=\"name\">${it.name}</span></div>`;
+    cell.classList.add('filled');
+  });
+  updateTotals(targetSide);
+  // Select first slot for clarity
+  if (chosen.length > 0) selectSlot(targetSide, 0);
+}
+document.getElementById('randBuildBtn')?.addEventListener('click', () => randomizeSide('P'));
+document.getElementById('randEnemyBtn')?.addEventListener('click', () => randomizeSide('O'));
+
+// Collect the current loadout and computed statistics for simulation.  The simulator
+// expects an object with a name, a stats object (hp, atk, armor, speed), the
+// weapon slug (empty string if none) and a list of item slugs.  This helper reads
+// the aggregated numbers from the DOM and extracts the slugs from our side state.
+function collectEntityData(sideKey) {
+  const prefix = sideKey === 'P' ? 'p' : 'o';
+  const hp = parseInt($('#' + prefix + 'H').textContent, 10) || 0;
+  const items = (sides[sideKey].items || []).filter(Boolean).map(it => ({ slug: `${it.bucket}/${it.slug}`, tier: it.tier || 'base' }));
+  if (sides[sideKey].edge) {
+    items.push({ slug: `${sides[sideKey].edge.bucket}/${sides[sideKey].edge.slug}`, tier: 'base' });
+  }
+  return {
+    name: sideKey === 'P' ? 'Player' : 'Opponent',
+    hp,
+    hpMax: hp,
+    atk: parseInt($('#' + prefix + 'A').textContent, 10) || 0,
+    armor: parseInt($('#' + prefix + 'R').textContent, 10) || 0,
+    speed: parseInt($('#' + prefix + 'S').textContent, 10) || 0,
+    weaponSlug: sides[sideKey].weapon ? `${sides[sideKey].weapon.bucket}/${sides[sideKey].weapon.slug}` : null,
+    items
+  };
+}
+
+// -----------------------------------------------------------------------------
+// Simulation UI wiring
+//
+// The simulation panel is a floating box (#simPanel) anchored at the bottom
+// right of the viewport. It contains buttons to run a battle, clear the log
+// and adjust the number of turns. When the Simulate button is clicked we
+// collect the current loadouts, run the simulation via HeICSim and print the
+// result and log lines into #simLog. Clear Log simply wipes the log container.
+
+function uiLogClear() {
+  const log = document.getElementById('simLog');
+  if (log) log.innerHTML = '';
+}
+
+function uiLog(lines) {
+  const log = document.getElementById('simLog');
+  if (!log) return;
+  const renderLine = (line) => {
+    if (line == null) return;
+    const div = document.createElement('div');
+    div.className = 'logLine';
+    const m = String(line).match(/^::icon:([^:]+)::\s*(.*)$/);
+    if (m) {
+      const slug = m[1];
+      const text = m[2];
+      const img = document.createElement('img');
+      img.src = slug + '/icon.png';
+      img.alt = '';
+      img.style.width = '18px';
+      img.style.height = '18px';
+      img.style.imageRendering = 'pixelated';
+      img.style.marginRight = '8px';
+      img.style.verticalAlign = 'text-bottom';
+      div.appendChild(img);
+      div.appendChild(document.createTextNode(text));
+    } else {
+      div.textContent = String(line);
+    }
+    log.appendChild(div);
+  };
+  if (Array.isArray(lines)) { for (const l of lines) renderLine(l); }
+  else { renderLine(lines); }
+  log.scrollTop = log.scrollHeight;
+}
+
+const simBtn = document.getElementById('btnSimulate');
+const showSimBtn = document.getElementById('showSimBtn');
+if (simBtn) {
+  simBtn.addEventListener('click', () => {
+    updateTotals('P');
+    updateTotals('O');
+    const left = collectEntityData('P');
+    const right = collectEntityData('O');
+    uiLogClear();
+    if (typeof HeICSim === 'undefined' || !HeICSim.simulate) {
+      uiLog('Simulation engine failed to load.');
+      return;
+    }
+  try {
+      const res = HeICSim.simulate(left, right);
+      uiLog(`Result: ${res.result}`);
+      uiLog(`Rounds: ${res.rounds}`);
+      if (res.summary) {
+        const fmt = (s) => {
+          const gained = s.statusesGained && Object.keys(s.statusesGained).length
+            ? Object.entries(s.statusesGained).map(([k,v])=>`${k}:${v}`).join(', ')
+            : 'none';
+          const inflicted = s.statusesInflicted && Object.keys(s.statusesInflicted).length
+            ? Object.entries(s.statusesInflicted).map(([k,v])=>`${k}:${v}`).join(', ')
+            : 'none';
+          return [
+            `${s.name} Summary`,
+            `  Damage to HP: ${s.hpDamageDealt}`,
+            `  Armor destroyed: ${s.armorDestroyedDealt}`,
+            `  Bomb HP: ${s.bombHpDealt}`,
+            `  Strikes: ${s.strikesLanded}/${s.strikesAttempted}`,
+            `  Statuses gained: ${gained}`,
+            `  Statuses inflicted: ${inflicted}`
+          ].join('\n');
+        };
+        uiLog('--- Summary ---');
+        uiLog(fmt(res.summary.left));
+        uiLog('');
+        uiLog(fmt(res.summary.right));
+        uiLog('----------------');
+      }
+      if (res.log && res.log.length) uiLog(res.log);
+    } catch (ex) {
+      console.error(ex);
+      uiLog('Error running simulation.');
+    }
+  });
+}
+const clearBtn = document.getElementById('btnClearLog');
+if (clearBtn) {
+  clearBtn.addEventListener('click', () => uiLogClear());
+}
+
+// Normalize any garbled labels from past encoding issues
+(function normalizeLabels(){
+  try {
+    const ep = document.getElementById('edgeP');
+    if (ep && ep.options && ep.options.length) ep.options[0].textContent = '- Select Edge -';
+    const eo = document.getElementById('edgeO');
+    if (eo && eo.options && eo.options.length) eo.options[0].textContent = '- Select Edge -';
+    const rb = document.getElementById('randBuildBtn'); if (rb) rb.textContent = 'Random Build';
+    const re = document.getElementById('randEnemyBtn'); if (re) re.textContent = 'Random Enemy';
+    const bs = document.getElementById('btnSimulate'); if (bs) bs.textContent = 'Simulate';
+  } catch (_) {}
+})();
+
+
+// Tab switching logic
+const compendiumTab = document.getElementById('compendiumTab');
+const simulationTab = document.getElementById('simulationTab');
+const tabCompendium = document.getElementById('tabCompendium');
+const tabSimulation = document.getElementById('tabSimulation');
+if (tabCompendium && tabSimulation && compendiumTab && simulationTab) {
+  tabCompendium.addEventListener('click', () => {
+    compendiumTab.style.display = '';
+    simulationTab.style.display = 'none';
+    tabCompendium.style.background = '#111';
+    tabCompendium.style.color = '#f33';
+    tabSimulation.style.background = '#111';
+    tabSimulation.style.color = '#0f3';
+  });
+  tabSimulation.addEventListener('click', () => {
+    compendiumTab.style.display = 'none';
+    simulationTab.style.display = '';
+    tabCompendium.style.background = '#111';
+    tabCompendium.style.color = '#f33';
+    tabSimulation.style.background = '#111';
+    tabSimulation.style.color = '#0f3';
+  });
+}
+if (showSimBtn && simulationTab && compendiumTab) {
+  showSimBtn.addEventListener('click', () => {
+    compendiumTab.style.display = 'none';
+    simulationTab.style.display = '';
+    tabCompendium.style.background = '#111';
+    tabCompendium.style.color = '#f33';
+    tabSimulation.style.background = '#111';
+    tabSimulation.style.color = '#0f3';
+  });
+}
+
+// Initial render happens after details.json loads via loadData()
+</script>
+
+</body>
+</html>
