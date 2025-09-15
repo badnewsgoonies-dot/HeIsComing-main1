@@ -351,88 +351,91 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
 /* Main builder logic using embedded details data */
 let RAW_DATA = {};
 let DATA_ARR = [];
-async function loadData() {
-  let baseData = null;
-  const getEmbeddedDetails = () => {
-    try {
-      if (window.HEIC_DETAILS && typeof window.HEIC_DETAILS === 'object') return window.HEIC_DETAILS;
-    } catch(_) {}
-    return null;
-  };
-  try {
-    const res = await fetch('details.json', { cache: 'no-store' });
-    if (!res.ok) throw new Error('Failed to load details.json: ' + res.status);
-    baseData = await res.json();
-    try { window.HEIC_DETAILS = baseData; } catch(_) {}
-  } catch(fetchErr) {
-    const fallback = getEmbeddedDetails();
-    if (fallback) {
-      baseData = fallback;
-      console.warn('Falling back to embedded details payload', fetchErr);
-      if (!document.getElementById('loadoutFallbackNotice')) {
-        const note = document.createElement('div');
-        note.id = 'loadoutFallbackNotice';
-        note.style.color = '#f66';
-        note.style.padding = '8px';
-        note.textContent = 'Using built-in compendium data. For live updates serve the files via a local server.';
-        document.body.insertBefore(note, document.body.firstChild);
-      }
-    } else {
-      console.error('Error loading details.json', fetchErr);
-      if (!document.getElementById('loadoutErrorNotice')) {
-        const msg = document.createElement('div');
-        msg.id = 'loadoutErrorNotice';
-        msg.style.color = '#f66';
-        msg.style.padding = '8px';
-        msg.textContent = 'Failed to load details.json. Please serve files via a local server (e.g., python -m http.server) instead of opening via file://';
-        document.body.insertBefore(msg, document.body.firstChild);
-      }
-      return;
-    }
-  }
-  RAW_DATA = baseData || {};
-  // Attempt to load optional stats_overrides.json and merge it into RAW_DATA.
-  try {
-    const resO = await fetch('stats_overrides.json', { cache: 'no-store' });
-    if (resO.ok) {
-      const overrides = await resO.json();
-      for (const [k, statObj] of Object.entries(overrides || {})) {
-        if (RAW_DATA[k]) {
-          const baseStats = RAW_DATA[k].stats || {};
-          RAW_DATA[k].stats = Object.assign({}, baseStats, statObj);
-        }
-      }
-    }
-  } catch(oerr) {
-    // Ignore missing overrides file; it's optional.
-  }
-  DATA_ARR = Object.entries(RAW_DATA).map(([key,val]) => { val.key = key; return val; });
-  // Build a set of keys that support Gold/Diamond tiers either because:
-  // - effect text mentions Gold/Diamond, or
-  // - sibling variant slugs *_gold or *_diamond exist.
-  window.TIERABLE = new Set();
-  const keys = Object.keys(RAW_DATA);
-  const hasVariant = (slug) => keys.some(k => /^(items|weapons)\//.test(k) && (k.endsWith(slug+"_gold") || k.endsWith(slug+"_diamond")));
-  for (const [k, v] of Object.entries(RAW_DATA)){
-    if (!v || typeof v !== 'object') continue;
-    const eff = (v.effect||'');
-    const m = /^(items|weapons)\/(.+)$/.exec(k);
-    const baseSlug = m ? m[2] : '';
-    if (/gold|diamond/i.test(eff) || hasVariant(baseSlug)) {
-      window.TIERABLE.add(k);
-    }
-  }
-  // Populate edge selects once data is ready
-  populateEdges();
-  // Build empty item grids for both sides
-  initSlots();
-  // Render the compendium grid
-  renderGrid();
-  // Compute initial totals for player and opponent (empty builds)
-  updateTotals('P');
-  updateTotals('O');
-}
-loadData();
+async function loadData() {
+  const getEmbeddedDetails = () => {
+    try {
+      if (window.HEIC_DETAILS && typeof window.HEIC_DETAILS === 'object') return window.HEIC_DETAILS;
+    } catch(_) {}
+    return null;
+  };
+  const preferEmbedded = (typeof window !== 'undefined' && window.location && window.location.protocol === 'file:');
+  let baseData = null;
+  if (preferEmbedded) {
+    baseData = getEmbeddedDetails();
+    if (!baseData) {
+      console.warn('Embedded details payload missing while running from file://, attempting fetch.');
+    }
+  }
+  if (!baseData) {
+    try {
+      const res = await fetch('details.json', { cache: 'no-store' });
+      if (!res.ok) throw new Error('Failed to load details.json: ' + res.status);
+      baseData = await res.json();
+      try { window.HEIC_DETAILS = baseData; } catch(_) {}
+    } catch(fetchErr) {
+      const fallback = getEmbeddedDetails();
+      if (fallback) {
+        baseData = fallback;
+        console.warn('Falling back to embedded details payload', fetchErr);
+        if (!document.getElementById('loadoutFallbackNotice')) {
+          const note = document.createElement('div');
+          note.id = 'loadoutFallbackNotice';
+          note.style.color = '#f66';
+          note.style.padding = '8px';
+          note.textContent = 'Using built-in compendium data. For live updates serve the files via a local server.';
+          document.body.insertBefore(note, document.body.firstChild);
+        }
+      } else {
+        console.error('Error loading details.json', fetchErr);
+        if (!document.getElementById('loadoutErrorNotice')) {
+          const msg = document.createElement('div');
+          msg.id = 'loadoutErrorNotice';
+          msg.style.color = '#f66';
+          msg.style.padding = '8px';
+          msg.textContent = 'Failed to load details.json. Please serve files via a local server (e.g., python -m http.server) instead of opening via file://';
+          document.body.insertBefore(msg, document.body.firstChild);
+        }
+        return;
+      }
+    }
+  }
+  if (!baseData) {
+    console.error('Compendium data unavailable.');
+    return;
+  }
+  RAW_DATA = baseData || {};
+  try {
+    const resO = await fetch('stats_overrides.json', { cache: 'no-store' });
+    if (resO.ok) {
+      const overrides = await resO.json();
+      for (const [k, statObj] of Object.entries(overrides || {})) {
+        if (RAW_DATA[k]) {
+          const baseStats = RAW_DATA[k].stats || {};
+          RAW_DATA[k].stats = Object.assign({}, baseStats, statObj);
+        }
+      }
+    }
+  } catch(oerr) { /* stats_overrides is optional */ }
+  DATA_ARR = Object.entries(RAW_DATA).map(([key, val]) => { val.key = key; return val; });
+  window.TIERABLE = new Set();
+  const keys = Object.keys(RAW_DATA);
+  const hasVariant = (slug) => keys.some(k => /^(items|weapons)\//.test(k) && (k.endsWith(slug + '_gold') || k.endsWith(slug + '_diamond')));
+  for (const [k, v] of Object.entries(RAW_DATA)) {
+    if (!v || typeof v !== 'object') continue;
+    const eff = (v.effect || '');
+    const m = /^(items|weapons)\/(.+)$/.exec(k);
+    const baseSlug = m ? m[2] : '';
+    if (/gold|diamond/i.test(eff) || hasVariant(baseSlug)) {
+      window.TIERABLE.add(k);
+    }
+  }
+  populateEdges();
+  initSlots();
+  renderGrid();
+  updateTotals('P');
+  updateTotals('O');
+}
+loadData();
 / Icons for stats
 const ICONS = { attack:'assets/attack.png', health:'assets/health.png', armor:'assets/armor.png', speed:'assets/speed.png' };
 
@@ -1431,4 +1434,5 @@ if (showSimBtn && simulationTab && compendiumTab) {
 
 </body>
 </html>
+
 
