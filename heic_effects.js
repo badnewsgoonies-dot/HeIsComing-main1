@@ -659,11 +659,12 @@
 
   // Countdown-related items
   hooks['items/arcane_bell'] = {
-    battleStart({ self, log }) {
+    battleStart({ self, log, triggerSymphony }) {
       if (typeof self.decAllCountdowns === 'function') {
         self.decAllCountdowns(1);
         log(`${self.name} decreases all countdowns by 1 (Arcane Bell).`);
       }
+      if (triggerSymphony) triggerSymphony('items/arcane_bell');
     }
   };
 
@@ -888,9 +889,12 @@
     }
   };
 
-  // Grand Crescendo: requires instrument/symphony subsystem
+  // Grand Crescendo: Symphony triggers all your other instruments
   hooks['items/grand_crescendo'] = {
-    battleStart({ self, log }) { log(`[TODO] ${self.name}'s Grand Crescendo requires instrument/symphony system.`); }
+    battleStart({ triggerSymphony, log }) { 
+      log(`Grand Crescendo awakens, conducting the symphony of instruments!`);
+      triggerSymphony('items/grand_crescendo');
+    }
   };
 
   // Helmet of Envy: Battle Start double enemy attack
@@ -2149,6 +2153,72 @@
           break;
         }
       }
+    }
+  };
+
+  // Symphony Instruments Implementation
+  // ----------------------------------
+  
+  // Liferoot Lute: Wounded: Gain 3 regeneration. Symphony
+  hooks['items/liferoot_lute'] = {
+    onWounded({ self, log, triggerSymphony }) {
+      self.addStatus('regen', 3);
+      log(`${self.name} gains 3 regeneration (Liferoot Lute).`);
+      if (triggerSymphony) triggerSymphony('items/liferoot_lute');
+    }
+  };
+
+  // Royal Horn: Wounded: Gain 2 gold. Symphony
+  hooks['items/royal_horn'] = {
+    onWounded({ self, log, triggerSymphony }) {
+      self.gold = (self.gold || 0) + 2;
+      log(`${self.name} gains 2 gold (Royal Horn).`);
+      if (triggerSymphony) triggerSymphony('items/royal_horn');
+    }
+  };
+
+  // Riverflow Violin: Exposed: Gain 4 armor. Symphony
+  hooks['items/riverflow_violin'] = {
+    onExposed({ self, log, triggerSymphony }) {
+      self.armor += 4;
+      log(`${self.name} gains 4 armor (Riverflow Violin).`);
+      if (triggerSymphony) triggerSymphony('items/riverflow_violin');
+    }
+  };
+
+  // Serpent Lyre: Exposed: Give the enemy 3 poison. Symphony
+  hooks['items/serpent_lyre'] = {
+    onExposed({ self, other, log, triggerSymphony }) {
+      other.addStatus('poison', 3);
+      log(`${other.name} gains 3 poison (Serpent Lyre).`);
+      if (triggerSymphony) triggerSymphony('items/serpent_lyre');
+    }
+  };
+
+  // Stormcloud Drum: Wounded: Stun the enemy for 1 turn. Symphony  
+  hooks['items/stormcloud_drum'] = {
+    onWounded({ self, other, log, triggerSymphony }) {
+      other.addStatus('stun', 1);
+      log(`${other.name} is stunned for 1 turn (Stormcloud Drum).`);
+      if (triggerSymphony) triggerSymphony('items/stormcloud_drum');
+    }
+  };
+
+  // Sheet Music: Countdown 6: Trigger Symphony 3 times
+  hooks['items/sheet_music'] = {
+    battleStart({ self }) {
+      self.addCountdown({ name: 'Sheet Music', turns: 6, slug: 'items/sheet_music' });
+    },
+    countdown({ self, log, triggerSymphony }) {
+      log(`${self.name} plays the Sheet Music!`);
+      // Trigger symphony 3 times
+      if (triggerSymphony) {
+        for (let i = 0; i < 3; i++) {
+          triggerSymphony('items/sheet_music');
+        }
+      }
+      // Reset countdown
+      self.addCountdown({ name: 'Sheet Music', turns: 6, slug: 'items/sheet_music' });
     }
   };
 

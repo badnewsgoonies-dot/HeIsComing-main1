@@ -189,6 +189,61 @@ let CURRENT_SOURCE_SLUG = null;
     }
   }
 
+  // Helper function to trigger symphony effects
+  function triggerSymphony(self, other, baseLog, triggeringSlug) {
+    // Get all instruments that have "Symphony" in their effect description
+    const details = (typeof window !== 'undefined' && window.HEIC_DETAILS) ? window.HEIC_DETAILS : {};
+    const symphonyItems = [];
+    
+    for (const s of self.items) {
+      const slug = (typeof s === 'string') ? s : (s && (s.slug || s.key || s));
+      if (slug && slug !== triggeringSlug) { // Don't retrigger the same item
+        const itemDetails = details[slug];
+        if (itemDetails && itemDetails.effect && itemDetails.effect.includes('Symphony')) {
+          symphonyItems.push(s);
+        }
+      }
+    }
+    
+    if (symphonyItems.length > 0) {
+      baseLog(`Symphony resonates, triggering ${symphonyItems.length} instrument(s)!`);
+      
+      // Trigger each symphony item's main effect
+      for (const s of symphonyItems) {
+        const slug = (typeof s === 'string') ? s : (s && (s.slug || s.key || s));
+        const h = HOOKS[slug];
+        
+        if (h) {
+          // Try different event types that might apply to this instrument
+          const events = ['battleStart', 'onWounded', 'onExposed'];
+          const itemDetails = details[slug];
+          
+          if (itemDetails && itemDetails.effect) {
+            if (itemDetails.effect.includes('Wounded:')) {
+              const fn = h['onWounded'];
+              if (typeof fn === 'function') {
+                const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s });
+              }
+            } else if (itemDetails.effect.includes('Exposed:')) {
+              const fn = h['onExposed'];
+              if (typeof fn === 'function') {
+                const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s });
+              }
+            } else if (itemDetails.effect.includes('Battle Start:')) {
+              const fn = h['battleStart'];
+              if (typeof fn === 'function') {
+                const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
   // Source slug used to annotate log lines with an icon (set per-hook)
   function callHooks(event, self, other, baseLog, extra){
     attachHelpers(self, other, baseLog);
@@ -209,6 +264,7 @@ let CURRENT_SOURCE_SLUG = null;
       log: (m) => baseLog(CURRENT_SOURCE_SLUG ? `::icon:${CURRENT_SOURCE_SLUG}:: ${m}` : m),
       withActor,
       withSource,
+      triggerSymphony: (triggeringSlug) => triggerSymphony(self, other, baseLog, triggeringSlug),
       ...extra
     });
     // Weapon triggers first, then items left-to-right
