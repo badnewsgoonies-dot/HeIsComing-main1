@@ -890,11 +890,9 @@
   };
 
   // Grand Crescendo: Symphony triggers all your other instruments
+  // This item only triggers when its symphony is activated by other symphony items
   hooks['items/grand_crescendo'] = {
-    battleStart({ triggerSymphony, log }) { 
-      log(`Grand Crescendo awakens, conducting the symphony of instruments!`);
-      triggerSymphony('items/grand_crescendo');
-    }
+    // No battleStart - Grand Crescendo only activates when its symphony is triggered
   };
 
   // Helmet of Envy: Battle Start double enemy attack

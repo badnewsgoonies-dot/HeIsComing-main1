@@ -191,6 +191,12 @@ let CURRENT_SOURCE_SLUG = null;
 
   // Helper function to trigger symphony effects
   function triggerSymphony(self, other, baseLog, triggeringSlug) {
+    // Special case: Grand Crescendo triggers ALL instruments, not just symphony ones
+    if (triggeringSlug === 'items/grand_crescendo') {
+      triggerAllInstruments(self, other, baseLog, triggeringSlug);
+      return;
+    }
+    
     // Get all instruments that have "Symphony" in their effect description
     const details = (typeof window !== 'undefined' && window.HEIC_DETAILS) ? window.HEIC_DETAILS : {};
     const symphonyItems = [];
@@ -215,7 +221,6 @@ let CURRENT_SOURCE_SLUG = null;
         
         if (h) {
           // Try different event types that might apply to this instrument
-          const events = ['battleStart', 'onWounded', 'onExposed'];
           const itemDetails = details[slug];
           
           if (itemDetails && itemDetails.effect) {
@@ -223,19 +228,81 @@ let CURRENT_SOURCE_SLUG = null;
               const fn = h['onWounded'];
               if (typeof fn === 'function') {
                 const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
-                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s });
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s, triggerSymphony: (slug) => triggerSymphony(self, other, baseLog, slug) });
               }
             } else if (itemDetails.effect.includes('Exposed:')) {
               const fn = h['onExposed'];
               if (typeof fn === 'function') {
                 const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
-                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s });
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s, triggerSymphony: (slug) => triggerSymphony(self, other, baseLog, slug) });
               }
             } else if (itemDetails.effect.includes('Battle Start:')) {
               const fn = h['battleStart'];
               if (typeof fn === 'function') {
                 const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
-                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s });
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s, triggerSymphony: (slug) => triggerSymphony(self, other, baseLog, slug) });
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+
+  // Helper function to trigger ALL instruments (used by Grand Crescendo)
+  function triggerAllInstruments(self, other, baseLog, triggeringSlug) {
+    const details = (typeof window !== 'undefined' && window.HEIC_DETAILS) ? window.HEIC_DETAILS : {};
+    const allItems = [];
+    
+    for (const s of self.items) {
+      const slug = (typeof s === 'string') ? s : (s && (s.slug || s.key || s));
+      if (slug && slug !== triggeringSlug) { // Don't retrigger Grand Crescendo itself
+        allItems.push(s);
+      }
+    }
+    
+    if (allItems.length > 0) {
+      baseLog(`Grand Crescendo conducts all ${allItems.length} instrument(s)!`);
+      
+      // Trigger each item's main effect
+      for (const s of allItems) {
+        const slug = (typeof s === 'string') ? s : (s && (s.slug || s.key || s));
+        const h = HOOKS[slug];
+        
+        if (h) {
+          const itemDetails = details[slug];
+          
+          if (itemDetails && itemDetails.effect) {
+            // Try to determine the appropriate trigger based on the effect text
+            if (itemDetails.effect.includes('Wounded:')) {
+              const fn = h['onWounded'];
+              if (typeof fn === 'function') {
+                const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s, triggerSymphony: (slug) => triggerSymphony(self, other, baseLog, slug) });
+              }
+            } else if (itemDetails.effect.includes('Exposed:')) {
+              const fn = h['onExposed'];
+              if (typeof fn === 'function') {
+                const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s, triggerSymphony: (slug) => triggerSymphony(self, other, baseLog, slug) });
+              }
+            } else if (itemDetails.effect.includes('Battle Start:')) {
+              const fn = h['battleStart'];
+              if (typeof fn === 'function') {
+                const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s, triggerSymphony: (slug) => triggerSymphony(self, other, baseLog, slug) });
+              }
+            } else if (itemDetails.effect.includes('Turn Start:')) {
+              const fn = h['turnStart'];
+              if (typeof fn === 'function') {
+                const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s, triggerSymphony: (slug) => triggerSymphony(self, other, baseLog, slug) });
+              }
+            } else if (itemDetails.effect.includes('On Hit:')) {
+              const fn = h['onHit'];
+              if (typeof fn === 'function') {
+                const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
+                fn({ self, other, log: (m) => baseLog(`::icon:${slug}:: ${m}`), tier, sourceItem: s, triggerSymphony: (slug) => triggerSymphony(self, other, baseLog, slug) });
               }
             }
           }
