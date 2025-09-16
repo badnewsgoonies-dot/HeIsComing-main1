@@ -288,9 +288,9 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
   <div class="center-column">
       <div class="stat"><img src="assets/speed.png" alt="spd"><span id="pS">0</span></div>
     </div>
-        <button id="randBuildBtn" type="button" class="rand-btn" title="Fill your slots with random items and a random weapon from the compendium">🎲 Random Build</button>
-        <button id="randEnemyBtn" type="button" class="rand-btn" title="Randomize the opponent's loadout">🎲 Random Enemy</button>
-        <button id="showSimBtn" type="button" class="show-sim-btn">Show Simulation</button>
+        <button id="randBuildBtnLeft" type="button" class="rand-btn" title="Fill your slots with random items and a random weapon from the compendium">🎲 Random Build</button>
+        <button id="randEnemyBtnLeft" type="button" class="rand-btn" title="Randomize the opponent's loadout">🎲 Random Enemy</button>
+        <button id="showSimBtnLeft" type="button" class="show-sim-btn">Show Simulation</button>
   <!-- CENTER COLUMN -->
   <div style="grid-column: 2; display: flex; flex-direction: column; height: 100%; min-height:0;">
     <div class="tabs" style="display:flex; gap:2px; margin-bottom:8px;">
@@ -308,7 +308,7 @@ header { padding:10px 16px; border-bottom:2px solid #f33; }
           <option value="Jewelry">Jewelry</option><option value="Tome">Tome</option><option value="Food">Food</option>
         </select>
         <button id="randBuildBtn" type="button" title="Fill your slots with random items and a random weapon from the compendium" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">ðŸŽ² Random Build</button>
-        <button id="randEnemyBtn" type="button" title="Randomize the opponent's loadout" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">ðŸŽ² Random Enemy</button>
+        <button id="randEnemyBtn" type="button" title="Randomize the opponent's loadout" style="background:#f33;color:#000;border:1px solid #f33;border-radius:8px;padding:6px 10px;cursor:pointer;">🎲 Random Enemy</button>
         <button id="showSimBtn" type="button" style="background:#0f3;color:#000;border:1px solid #0f3;border-radius:8px;padding:6px 10px;cursor:pointer;font-size:16px;margin-left:16px;">Show Simulation</button>
         <span id="count" style="margin-left:auto;">Shown: 0</span>
       </div>
@@ -1055,8 +1055,8 @@ function randomizeSide(targetSide){
   // Select first slot for clarity
   if (chosen.length > 0) selectSlot(targetSide, 0);
 }
-document.getElementById('randBuildBtn')?.addEventListener('click', () => randomizeSide('P'));
-document.getElementById('randEnemyBtn')?.addEventListener('click', () => randomizeSide('O'));
+document.getElementById('randBuildBtnLeft')?.addEventListener('click', () => randomizeSide('P'));
+document.getElementById('randEnemyBtnLeft')?.addEventListener('click', () => randomizeSide('O'));
 
 // Collect the current loadout and computed statistics for simulation.  The simulator
 // expects an object with a name, a stats object (hp, atk, armor, speed), the
