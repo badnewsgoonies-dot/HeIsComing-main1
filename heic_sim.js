@@ -344,11 +344,13 @@ let CURRENT_SOURCE_SLUG = null;
       const slug = (typeof s === 'string') ? s : (s && (s.slug || s.key || s));
       const h = HOOKS[slug];
       const fn = h && h[event];
-      if (typeof fn === 'function') withActor(self, () => withSource(slug, () => {
-        const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
-        const ctx = Object.assign({}, mkCtx(), { tier, sourceItem: s });
-        fn(ctx);
-      }));
+      if (typeof fn === 'function') {
+        withActor(self, () => withSource(slug, () => {
+          const tier = (typeof s === 'object' && s && s.tier) ? s.tier : 'base';
+          const ctx = Object.assign({}, mkCtx(), { tier, sourceItem: s });
+          fn(ctx);
+        }));
+      }
     }
     // Global hooks (if any)
     const gf = HOOKS._global && HOOKS._global[event];
@@ -460,8 +462,15 @@ let CURRENT_SOURCE_SLUG = null;
     // Acid: At Turn Start, reduce Armor by Acid stacks
     if (a.statuses.acid > 0) {
       const lost = Math.min(a.armor, a.statuses.acid);
+      const armorWas = a.armor;
       a.armor -= lost;
       if (lost > 0) log(`${a.name} loses ${lost} armor due to Acid`);
+      
+      // Check for Exposed trigger if armor reached 0 for the first time
+      if (armorWas > 0 && a.armor === 0 && a._exposedCount < (a._exposedLimit||1)) {
+        a._exposedCount++;
+        callHooks('onExposed', a, other, m=>log(m));
+      }
     }
     // Poison: At Turn Start, if Armor is 0, take Poison damage, then decrement Poison
     if (a.statuses.poison > 0) {
@@ -471,6 +480,12 @@ let CURRENT_SOURCE_SLUG = null;
         log(`${a.name} suffers ${a.statuses.poison} poison damage`);
         // Notify listeners about poison tick
         callHooks('onPoisonTick', a, other, m=>log(m), { amount: a.statuses.poison });
+        
+        // Check for Wounded trigger if HP crossed 50% threshold
+        if (!a.woundedDone && a.hp <= Math.floor(a.hpMax/2)) {
+          a.woundedDone = true;
+          callHooks('onWounded', a, other, m=>log(m));
+        }
       }
       a.statuses.poison--;
     }
@@ -494,6 +509,7 @@ let CURRENT_SOURCE_SLUG = null;
       const cap = a._riptideMaxTriggers || 1;
       let ticks = 0;
       while (a.statuses.riptide > 0 && ticks < cap) {
+        const armorWas = a.armor;
         let dmg = 5;
         const toArmor = Math.min(a.armor, dmg);
         if (toArmor > 0) a.armor -= toArmor;
@@ -505,6 +521,19 @@ let CURRENT_SOURCE_SLUG = null;
         log(`${a.name} is battered by Riptide`);
         if (other) callHooks('onEnemyRiptideTick', other, a, m=>log(m));
         callHooks('onRiptideTick', a, other, m=>log(m));
+        
+        // Check for Exposed trigger if armor reached 0 for the first time
+        if (armorWas > 0 && a.armor === 0 && a._exposedCount < (a._exposedLimit||1)) {
+          a._exposedCount++;
+          callHooks('onExposed', a, other, m=>log(m));
+        }
+        
+        // Check for Wounded trigger if HP crossed 50% threshold
+        if (!a.woundedDone && a.hp <= Math.floor(a.hpMax/2)) {
+          a.woundedDone = true;
+          callHooks('onWounded', a, other, m=>log(m));
+        }
+        
         a.statuses.riptide--;
         ticks++;
       }
